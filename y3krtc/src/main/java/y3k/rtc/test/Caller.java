@@ -56,17 +56,6 @@ public class Caller implements AppRTCClient.SignalingEvents,
         boolean loopback = false;
         boolean tracing = true;
 
-        // TODO Room URI
-        Uri roomUri = Uri.parse("https://appr.tc");
-
-        // TODO Room ID
-        String roomId = "y3kTest"+ new Date().getTime();
-        Log.d(TAG, "Room ID: " + roomId);
-
-        if (loopback) {
-            roomId = Integer.toString((new Random()).nextInt(100000000));
-        }
-
         // If capturing format is not specified for screencapture, use screen resolution.
         DataChannelParameters dataChannelParameters = new DataChannelParameters(
                 true, //EXTRA_ORDERED
@@ -107,12 +96,20 @@ public class Caller implements AppRTCClient.SignalingEvents,
 //      appRtcClient = new DirectRTCClient(this);
 //    }
         // Create connection parameters.
-        roomConnectionParameters = new RoomConnectionParameters(roomUri.toString(), roomId, loopback);
     }
 
-    public Caller connect() {
+    public Caller connect(String roomId) {
+        roomConnectionParameters = new RoomConnectionParameters("https://appr.tc", roomId, false);
         appRtcClient.connectToRoom(roomConnectionParameters);
         return this;
+    }
+
+    public void postMessage(String message){
+        appRtcClient.getWsClient().getHandler().post(()->appRtcClient.getWsClient().post(message));
+    }
+
+    public void sendMessage(String message){
+        appRtcClient.getWsClient().getHandler().post(()->appRtcClient.getWsClient().send(message));
     }
 
     // Disconnect from remote resources, dispose of local resources, and exit.
@@ -127,14 +124,6 @@ public class Caller implements AppRTCClient.SignalingEvents,
     public void onConnectedToRoom(final SignalingParameters params) {
         Log.d(TAG, "onConnectedToRoom(" + params.clientId + ")");
         // TODO onConnectedToRoom
-        new Thread(()->{
-            try {
-                Thread.sleep(10000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            this.appRtcClient.getWsClient().getHandler().post(()-> this.appRtcClient.getWsClient().post("y3k is cool"));
-        }).start();
     }
 
     @Override
