@@ -130,6 +130,10 @@ public class WebSocketChannelClient {
     }
   }
 
+  public Handler getHandler(){
+    return this.handler;
+  }
+
   public void send(String message) {
     checkIfCalledOnValidThread();
     switch (state) {
