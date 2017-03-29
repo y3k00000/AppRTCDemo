@@ -19,13 +19,98 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
 
     Y3kAppRTCClient y3kAppRTCClient;
+    WebSocketChannelClient.WebSocketChannelEvents webSocketMessageCallback = new WebSocketChannelClient.WebSocketChannelEvents() {
+        OutputStream currentOutputStream;
+
+        @Override
+        public void onWebSocketMessage(final String message) {
+            Log.d("WebSocket", "onWebSocketMessage(" + message + ")");
+            try {
+                JSONObject jsonObject = new JSONObject(message);
+                String messageInJSON = jsonObject.getString("msg");
+                Log.d("WebSocket", "msg = " + messageInJSON);
+                Log.d("WebSocket", "msg.length = " + messageInJSON.length());
+                try {
+                    switch (Y3kAppRTCClient.Command.valueOf(messageInJSON)) {
+                        case SENDING_START:
+                            this.currentOutputStream = new ByteArrayOutputStream();
+                            break;
+                        case SENDING_END:
+                            if (this.currentOutputStream != null) {
+                                if(this.currentOutputStream instanceof ByteArrayOutputStream){
+                                    Log.d("WebSocket", "ByteArrayOutputStream.size() = "+((ByteArrayOutputStream) this.currentOutputStream).size());
+                                    final Bitmap bitmap = BitmapFactory.decodeStream(new ByteArrayInputStream(((ByteArrayOutputStream) this.currentOutputStream).toByteArray()));
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            ImageView imageView = new ImageView(MainActivity.this);
+                                            imageView.setImageBitmap(bitmap);
+                                            new AlertDialog.Builder(MainActivity.this)
+                                                    .setView(imageView)
+                                                    .setPositiveButton("OK", null)
+                                                    .show();
+                                        }
+                                    });
+                                }
+                                try {
+                                    this.currentOutputStream.close();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                this.currentOutputStream = null;
+                            }
+                            break;
+                    }
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                    if(this.currentOutputStream!=null){
+                        try {
+                            this.currentOutputStream.write(Y3kAppRTCClient.DecodeHexStringToByteArray(messageInJSON));
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                        }
+                    }
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "onWebSocketMessage(" + message + ")", Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        }
+
+        @Override
+        public void onWebSocketClose() {
+            Log.d("WebSocket", "onWebSocketClose()");
+            callerExit();
+        }
+
+        @Override
+        public void onWebSocketError(final String description) {
+            Log.d("WebSocket", "onWebSocketError(" + description + ")");
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(MainActivity.this, "onWebSocketError(" + description + ")", Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+
+        @Override
+        public void onBinaryMessage(byte[] binary) {
+            Log.d("WebSocket", "onWebSocketError(" + (binary == null ? "null" : binary.length) + ")");
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,15 +147,12 @@ public class MainActivity extends AppCompatActivity {
                                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
                                 ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
-                                byte[] writeBuffer = new byte[1024];
-                                byteArrayOutputStream = new ByteArrayOutputStream();
-                                for (int readCount; (readCount = byteArrayInputStream.read(writeBuffer)) > 0; ) {
-                                    byteArrayOutputStream.write(writeBuffer, 0, readCount);
-                                    Log.d("WebSocket", "write bytes " + readCount);
+                                byte[] readBuffer = new byte[102400];
+                                for (int readCount; (readCount = byteArrayInputStream.read(readBuffer)) > 0; ) {
+                                    y3kAppRTCClient.postMessage(Y3kAppRTCClient.encodeByteArrayToHexString(Arrays.copyOf(readBuffer,readCount)));
                                 }
                                 byteArrayInputStream.close();
-                                y3kAppRTCClient.postMessage(Y3kAppRTCClient.encodeByteArrayToHexString(byteArrayOutputStream.toByteArray()));
-                            } catch (IOException e) {
+                            } catch (Exception e) {
                                 e.printStackTrace();
                             }
                             y3kAppRTCClient.postMessage(Y3kAppRTCClient.Command.SENDING_END.name());
@@ -79,104 +161,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
-    WebSocketChannelClient.WebSocketChannelEvents webSocketMessageCallback = new WebSocketChannelClient.WebSocketChannelEvents() {
-        OutputStream currentOutputStream;
-        File currentWritingFile;
-
-        @Override
-        public void onWebSocketMessage(final String message) {
-            Log.d("WebSocket", "onWebSocketMessage(" + message + ")");
-            try {
-                JSONObject jsonObject = new JSONObject(message);
-                String msg = jsonObject.getString("msg");
-                Log.d("WebSocket", "msg = " + msg);
-                try {
-                    switch (Y3kAppRTCClient.Command.valueOf(msg)) {
-                        case SENDING_START:
-//                        this.currentWritingFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/y3k_" + new Date().getTime() + ".jpg");
-//                        try {
-//                            if (this.currentWritingFile.createNewFile()) {
-//                                this.currentOutputStream = new FileOutputStream(this.currentWritingFile);
-//                            } else {
-//                                this.currentWritingFile = null;
-//                            }
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                            this.currentWritingFile = null;
-//                        }
-                            break;
-                        case SENDING_END:
-//                        if (this.currentOutputStream != null) {
-//                            try {
-//                                this.currentOutputStream.close();
-//                            } catch (IOException e) {
-//                                e.printStackTrace();
-//                            }
-//                            if (this.currentWritingFile != null) {
-//                                Uri fileUri = Uri.fromFile(this.currentWritingFile);
-//                                startActivity(new Intent(Intent.ACTION_VIEW).setData(fileUri));
-//                            }
-//                            this.currentOutputStream = null;
-//                            this.currentWritingFile = null;
-//                        }
-                            break;
-                    }
-                } catch (IllegalArgumentException e) {
-                    e.printStackTrace();
-                    final byte[] bitMapData = Y3kAppRTCClient.DecodeHexStringToByteArray(msg);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            ImageView imageView = new ImageView(MainActivity.this);
-                            imageView.setImageBitmap(BitmapFactory.decodeByteArray(bitMapData, 0, bitMapData.length));
-                            new AlertDialog.Builder(MainActivity.this)
-                                    .setView(imageView)
-                                    .setPositiveButton("OK", null)
-                                    .show();
-                        }
-                    });
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActivity.this, "onWebSocketMessage(" + message + ")", Toast.LENGTH_LONG).show();
-                    }
-                });
-            }
-        }
-
-        @Override
-        public void onWebSocketClose() {
-            Log.d("WebSocket", "onWebSocketClose()");
-            callerExit();
-        }
-
-        @Override
-        public void onWebSocketError(final String description) {
-            Log.d("WebSocket", "onWebSocketError(" + description + ")");
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(MainActivity.this, "onWebSocketError(" + description + ")", Toast.LENGTH_LONG).show();
-                }
-            });
-        }
-
-        @Override
-        public void onBinaryMessage(byte[] binary) {
-            Log.d("WebSocket", "onWebSocketError(" + (binary == null ? "null" : binary.length) + ")");
-//            if (binary != null && this.currentOutputStream != null) {
-//                try {
-//                    this.currentOutputStream.write(binary);
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-        }
-    };
 
     private void callerExit() {
         if (this.y3kAppRTCClient != null) {

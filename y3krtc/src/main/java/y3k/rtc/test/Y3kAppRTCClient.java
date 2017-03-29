@@ -11,6 +11,7 @@
 package y3k.rtc.test;
 
 import android.app.Activity;
+import android.os.NetworkOnMainThreadException;
 import android.util.Log;
 
 import org.appspot.apprtc.AppRTCClient;
@@ -24,6 +25,10 @@ import org.appspot.apprtc.WebSocketRTCClient;
 import org.webrtc.IceCandidate;
 import org.webrtc.SessionDescription;
 import org.webrtc.StatsReport;
+
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class Y3kAppRTCClient implements AppRTCClient.SignalingEvents,
         PeerConnectionClient.PeerConnectionEvents {
@@ -48,7 +53,7 @@ public class Y3kAppRTCClient implements AppRTCClient.SignalingEvents,
         boolean tracing = true;
 
         DataChannelParameters dataChannelParameters = new DataChannelParameters(
-                false, //EXTRA_ORDERED
+                true, //EXTRA_ORDERED
                 -1, //EXTRA_MAX_RETRANSMITS_MS
                 -1, //EXTRA_MAX_RETRANSMITS
                 "", //EXTRA_PROTOCOL
@@ -94,32 +99,38 @@ public class Y3kAppRTCClient implements AppRTCClient.SignalingEvents,
         return this;
     }
 
-    public void postMessage(final String message) {
-        appRtcClient.getWsClient().getHandler().post(new Runnable() {
-            @Override
-            public void run() {
-                appRtcClient.getWsClient().post(message);
-            }
-        });
+    public int postMessage(final String message) throws NetworkOnMainThreadException{
+        try {
+            HttpURLConnection httpURLConnection = (HttpURLConnection) new URL(this.appRtcClient.getWsClient().getRoomPostURL()).openConnection();
+            httpURLConnection.setRequestMethod("POST");
+            httpURLConnection.setDoOutput(true);
+            httpURLConnection.setReadTimeout(8000);
+            httpURLConnection.setConnectTimeout(8000);
+            httpURLConnection.getOutputStream().write(message.getBytes());
+            return httpURLConnection.getResponseCode();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return 0;
+        }
     }
 
-    public void sendMessage(final String message) {
-        appRtcClient.getWsClient().getHandler().post(new Runnable() {
-            @Override
-            public void run() {
-                appRtcClient.getWsClient().send(message);
-            }
-        });
-    }
-
-    public void sendBinary(final byte[] binary) {
-        appRtcClient.getWsClient().getHandler().post(new Runnable() {
-            @Override
-            public void run() {
-                appRtcClient.getWsClient().sendBinary(binary);
-            }
-        });
-    }
+//    public void sendMessage(final String message) {
+//        appRtcClient.getWsClient().getHandler().post(new Runnable() {
+//            @Override
+//            public void run() {
+//                appRtcClient.getWsClient().send(message);
+//            }
+//        });
+//    }
+//
+//    public void sendBinary(final byte[] binary) {
+//        appRtcClient.getWsClient().getHandler().post(new Runnable() {
+//            @Override
+//            public void run() {
+//                appRtcClient.getWsClient().sendBinary(binary);
+//            }
+//        });
+//    }
 
     public static byte[] DecodeHexStringToByteArray(String string) {
         int len = string.length();

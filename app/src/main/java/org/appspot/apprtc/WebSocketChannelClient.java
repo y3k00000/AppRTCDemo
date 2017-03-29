@@ -220,6 +220,10 @@ public class WebSocketChannelClient {
     });
   }
 
+  public String getRoomPostURL(){
+      return postServerUrl + "/" + roomID + "/" + clientID;
+  }
+
   // Asynchronously send POST/DELETE to WebSocket server.
   private void sendWSSMessage(final String method, final String message) {
     String postUrl = postServerUrl + "/" + roomID + "/" + clientID;
