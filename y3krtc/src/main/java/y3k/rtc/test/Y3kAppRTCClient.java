@@ -11,8 +11,6 @@
 package y3k.rtc.test;
 
 import android.app.Activity;
-import android.content.Context;
-import android.net.Uri;
 import android.util.Log;
 
 import org.appspot.apprtc.AppRTCClient;
@@ -21,44 +19,36 @@ import org.appspot.apprtc.AppRTCClient.SignalingParameters;
 import org.appspot.apprtc.PeerConnectionClient;
 import org.appspot.apprtc.PeerConnectionClient.DataChannelParameters;
 import org.appspot.apprtc.PeerConnectionClient.PeerConnectionParameters;
+import org.appspot.apprtc.WebSocketChannelClient;
 import org.appspot.apprtc.WebSocketRTCClient;
-import org.webrtc.DataChannel;
 import org.webrtc.IceCandidate;
-import org.webrtc.PeerConnection;
 import org.webrtc.SessionDescription;
 import org.webrtc.StatsReport;
-import org.webrtc.SurfaceTextureHelper;
-import org.webrtc.VideoCapturer;
-import org.webrtc.VideoRenderer;
 
-import java.nio.ByteBuffer;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Random;
-
-public class Caller implements AppRTCClient.SignalingEvents,
+public class Y3kAppRTCClient implements AppRTCClient.SignalingEvents,
         PeerConnectionClient.PeerConnectionEvents {
 
-    private static final String TAG = Caller.class.getName();
+    private static final String TAG = Y3kAppRTCClient.class.getName();
     private final Activity activity;
     private WebSocketRTCClient appRtcClient;
     private SignalingParameters signalingParameters;
     private RoomConnectionParameters roomConnectionParameters;
     private PeerConnectionParameters peerConnectionParameters;
     private boolean iceConnected = false;
-    private boolean isError;
-    private boolean micEnabled = true;
+
+    public enum Command{
+        SENDING_START, SENDING_END
+    }
 
     // Controls
-    public Caller(Activity activity) {
+    public Y3kAppRTCClient(Activity activity, WebSocketChannelClient.WebSocketChannelEvents webSocketCallback) {
         this.activity = activity;
 
         boolean loopback = false;
         boolean tracing = true;
 
-        // If capturing format is not specified for screencapture, use screen resolution.
         DataChannelParameters dataChannelParameters = new DataChannelParameters(
-                true, //EXTRA_ORDERED
+                false, //EXTRA_ORDERED
                 -1, //EXTRA_MAX_RETRANSMITS_MS
                 -1, //EXTRA_MAX_RETRANSMITS
                 "", //EXTRA_PROTOCOL
@@ -90,7 +80,7 @@ public class Caller implements AppRTCClient.SignalingEvents,
         // Create connection client. Use DirectRTCClient if room name is an IP otherwise use the
         // standard WebSocketRTCClient.
 //    if (loopback || !DirectRTCClient.IP_PATTERN.matcher(roomId).matches()) {
-        appRtcClient = new WebSocketRTCClient(this);
+        appRtcClient = new LameWebSocketRTCClient(this, webSocketCallback);
 //    } else {
 //      Log.i(TAG, "Using DirectRTCClient because room name looks like an IP.");
 //      appRtcClient = new DirectRTCClient(this);
@@ -98,18 +88,55 @@ public class Caller implements AppRTCClient.SignalingEvents,
         // Create connection parameters.
     }
 
-    public Caller connect(String roomId) {
+    public Y3kAppRTCClient connect(String roomId) {
         roomConnectionParameters = new RoomConnectionParameters("https://appr.tc", roomId, false);
         appRtcClient.connectToRoom(roomConnectionParameters);
         return this;
     }
 
-    public void postMessage(String message){
-        appRtcClient.getWsClient().getHandler().post(()->appRtcClient.getWsClient().post(message));
+    public void postMessage(final String message) {
+        appRtcClient.getWsClient().getHandler().post(new Runnable() {
+            @Override
+            public void run() {
+                appRtcClient.getWsClient().post(message);
+            }
+        });
     }
 
-    public void sendMessage(String message){
-        appRtcClient.getWsClient().getHandler().post(()->appRtcClient.getWsClient().send(message));
+    public void sendMessage(final String message) {
+        appRtcClient.getWsClient().getHandler().post(new Runnable() {
+            @Override
+            public void run() {
+                appRtcClient.getWsClient().send(message);
+            }
+        });
+    }
+
+    public void sendBinary(final byte[] binary) {
+        appRtcClient.getWsClient().getHandler().post(new Runnable() {
+            @Override
+            public void run() {
+                appRtcClient.getWsClient().sendBinary(binary);
+            }
+        });
+    }
+
+    public static byte[] DecodeHexStringToByteArray(String string) {
+        int len = string.length();
+        byte[] data = new byte[len/2];
+
+        for(int i = 0; i < len; i+=2){
+            data[i/2] = (byte) ((Character.digit(string.charAt(i), 16) << 4) + Character.digit(string.charAt(i+1), 16));
+        }
+        return data;
+    }
+
+    public static String encodeByteArrayToHexString(byte[] bytes) {
+        final StringBuilder builder = new StringBuilder();
+        for(byte b : bytes) {
+            builder.append(String.format("%02x", b));
+        }
+        return builder.toString();
     }
 
     // Disconnect from remote resources, dispose of local resources, and exit.

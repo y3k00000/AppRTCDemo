@@ -280,6 +280,10 @@ public class WebSocketRTCClient implements AppRTCClient, WebSocketChannelEvents 
     });
   }
 
+  public void sendBinary(byte[] binary){
+    wsClient.sendBinary(binary);
+  }
+
   // --------------------------------------------------------------------
   // WebSocketChannelEvents interface implementation.
   // All events are called by WebSocketChannelClient on a local looper thread
@@ -347,6 +351,11 @@ public class WebSocketRTCClient implements AppRTCClient, WebSocketChannelEvents 
   @Override
   public void onWebSocketError(String description) {
     reportError("WebSocket error: " + description);
+  }
+
+  @Override
+  public void onBinaryMessage(byte[] binary) {
+
   }
 
   // --------------------------------------------------------------------

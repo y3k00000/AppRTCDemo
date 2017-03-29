@@ -10,22 +10,21 @@
 
 package org.appspot.apprtc;
 
-import org.appspot.apprtc.util.AsyncHttpURLConnection;
-import org.appspot.apprtc.util.AsyncHttpURLConnection.AsyncHttpEvents;
-
 import android.os.Handler;
 import android.util.Log;
 
-import de.tavendo.autobahn.WebSocket.WebSocketConnectionObserver;
-import de.tavendo.autobahn.WebSocketConnection;
-import de.tavendo.autobahn.WebSocketException;
-
+import org.appspot.apprtc.util.AsyncHttpURLConnection;
+import org.appspot.apprtc.util.AsyncHttpURLConnection.AsyncHttpEvents;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.LinkedList;
+
+import de.tavendo.autobahn.WebSocket.WebSocketConnectionObserver;
+import de.tavendo.autobahn.WebSocketConnection;
+import de.tavendo.autobahn.WebSocketException;
 
 /**
  * WebSocket client implementation.
@@ -66,6 +65,7 @@ public class WebSocketChannelClient {
     void onWebSocketMessage(final String message);
     void onWebSocketClose();
     void onWebSocketError(final String description);
+    void onBinaryMessage(byte[] binary);
   }
 
   public WebSocketChannelClient(Handler handler, WebSocketChannelEvents events) {
@@ -168,6 +168,10 @@ public class WebSocketChannelClient {
   public void post(String message) {
     checkIfCalledOnValidThread();
     sendWSSMessage("POST", message);
+  }
+
+  public void sendBinary(byte[] binary){
+      ws.sendBinaryMessage(binary);
   }
 
   public void disconnect(boolean waitForComplete) {
@@ -295,6 +299,16 @@ public class WebSocketChannelClient {
     public void onRawTextMessage(byte[] payload) {}
 
     @Override
-    public void onBinaryMessage(byte[] payload) {}
+    public void onBinaryMessage(final byte[] payload) {
+      handler.post(new Runnable() {
+        @Override
+        public void run() {
+          if (state == WebSocketConnectionState.CONNECTED
+                  || state == WebSocketConnectionState.REGISTERED) {
+            events.onBinaryMessage(payload);
+          }
+        }
+      });
+    }
   }
 }
