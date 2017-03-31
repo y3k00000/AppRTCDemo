@@ -11,6 +11,7 @@
 package y3k.rtc.test;
 
 import android.app.Activity;
+import android.os.AsyncTask;
 import android.util.Log;
 
 import org.appspot.apprtc.AppRTCClient;
@@ -49,6 +50,7 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
     private final List<VideoRenderer.Callbacks> remoteRenderers =
             new ArrayList<>();
     DataChannel dataChannel;
+    AsyncTask currentSendingTask;
     private PeerConnectionClient peerConnectionClient = null;
     private AppRTCClient appRtcClient;
     private SignalingParameters signalingParameters;
@@ -146,10 +148,6 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
     @Override
     public void onCallHangUp() {
         disconnect();
-    }
-
-    private void callConnected() {
-        peerConnectionClient.enableStatsEvents(true, STAT_CALLBACK_PERIOD);
     }
 
     private void disconnect() {
@@ -272,7 +270,7 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
     public void onIceConnected() {
         Log.d(TAG, "onIceConnected()");
         iceConnected = true;
-        callConnected();
+        peerConnectionClient.enableStatsEvents(true, STAT_CALLBACK_PERIOD);
     }
 
     @Override
@@ -292,21 +290,31 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
         Log.d(TAG, "onPeerConnectionStatsReady(" + Arrays.toString(reports) + ");");
         if (this.dataChannel == null) {
             try {
-                DataChannel.Init dataChannelInit = new DataChannel.Init();
-                dataChannelInit.ordered = peerConnectionParameters.dataChannelParameters.ordered;
-                dataChannelInit.negotiated = peerConnectionParameters.dataChannelParameters.negotiated;
-                dataChannelInit.maxRetransmits = peerConnectionParameters.dataChannelParameters.maxRetransmits;
-                dataChannelInit.maxRetransmitTimeMs = peerConnectionParameters.dataChannelParameters.maxRetransmitTimeMs;
-                dataChannelInit.id = peerConnectionParameters.dataChannelParameters.id;
-                dataChannelInit.protocol = peerConnectionParameters.dataChannelParameters.protocol;
-                this.dataChannel = peerConnectionClient.getPeerConnection().createDataChannel("Y3kData", dataChannelInit);
+                this.dataChannel = this.newDataChannel("Y3kChannel");
             } catch (IllegalStateException e) {
                 e.printStackTrace();
             }
         } else {
-            if (signalingParameters.initiator) {
-                Log.d(TAG, "DataChannel.bufferedAmount() = " + dataChannel.bufferedAmount());
-                Log.d(TAG, "Send String = " + dataChannel.send(new DataChannel.Buffer(ByteBuffer.wrap("y3k is cool".getBytes()), false)));
+            if (signalingParameters.initiator && currentSendingTask == null) {
+                this.currentSendingTask = new AsyncTask<Void, Void, Void>() {
+                    @Override
+                    protected Void doInBackground(Void... params) {
+                        byte[] stringToSendThroughChannel = "y3k is c o o l man and he doesn't give up.".getBytes();
+                        for (byte b : stringToSendThroughChannel) {
+                            ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{b});
+                            dataChannel.send(new DataChannel.Buffer(byteBuffer, true));
+                        }
+                        dataChannel.close();
+                        return null;
+                    }
+
+                    @Override
+                    protected void onPostExecute(Void aVoid) {
+                        super.onPostExecute(aVoid);
+                        dataChannel = null;
+                        currentSendingTask = null;
+                    }
+                }.execute();
             }
         }
     }
@@ -316,7 +324,11 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
         dataChannel.registerObserver(new ByteArrayChannelReader(dataChannel).withCallback(new ChannelReader.Callback<byte[]>() {
             @Override
             public void onFinished(Exception e, byte[] result) {
-
+                if (e != null) {
+                    e.printStackTrace();
+                } else {
+                    Log.d("ChannelReader.Callback", new String(result));
+                }
             }
         }));
     }
@@ -324,5 +336,20 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
     @Override
     public void onPeerConnectionError(final String description) {
         Log.d(TAG, "onPeerConnectionError(" + description + ")");
+    }
+
+    public DataChannel newDataChannel(final String name) throws IllegalStateException {
+        if (this.peerConnectionClient == null) {
+            throw new IllegalStateException("peerConnectionClient==null , you fool!!");
+        } else {
+            DataChannel.Init dataChannelInit = new DataChannel.Init();
+            dataChannelInit.ordered = peerConnectionParameters.dataChannelParameters.ordered;
+            dataChannelInit.negotiated = peerConnectionParameters.dataChannelParameters.negotiated;
+            dataChannelInit.maxRetransmits = peerConnectionParameters.dataChannelParameters.maxRetransmits;
+            dataChannelInit.maxRetransmitTimeMs = peerConnectionParameters.dataChannelParameters.maxRetransmitTimeMs;
+            dataChannelInit.id = peerConnectionParameters.dataChannelParameters.id;
+            dataChannelInit.protocol = peerConnectionParameters.dataChannelParameters.protocol;
+            return peerConnectionClient.getPeerConnection().createDataChannel("Y3kData", dataChannelInit);
+        }
     }
 }

@@ -5,15 +5,18 @@ import org.webrtc.DataChannel;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 
-public class ByteArrayChannelReader extends ChannelReader<byte[]>{
-    private ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    public ByteArrayChannelReader(DataChannel dataChannel){
+public class ByteArrayChannelReader extends ChannelReader<byte[]> {
+    private ByteArrayOutputStream byteArrayOutputStream;
+
+    public ByteArrayChannelReader(DataChannel dataChannel) {
         super(dataChannel);
     }
+
     @Override
     OutputStream onCreateOutStream() {
-        return this.byteArrayOutputStream;
+        return this.byteArrayOutputStream = new ByteArrayOutputStream();
     }
+
     @Override
     byte[] onChannelClosed() {
         return this.byteArrayOutputStream.toByteArray();

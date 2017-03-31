@@ -32,6 +32,7 @@ public abstract class ChannelReader<T> implements DataChannel.Observer {
     public void onStateChange() {
         Log.d(this.getClass().getSimpleName(), "onStateChange(" + this.rtcDataChannel.state() + ")");
         if (this.rtcDataChannel.state() == DataChannel.State.CLOSED) {
+            this.rtcDataChannel.unregisterObserver();
             T result = this.onChannelClosed();
             if (this.callback != null) {
                 this.callback.onFinished(null, result);
