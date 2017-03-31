@@ -5,6 +5,7 @@ import org.webrtc.DataChannel;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 
 public class FileChannelReader extends ChannelReader<File> {
@@ -18,12 +19,17 @@ public class FileChannelReader extends ChannelReader<File> {
     }
 
     @Override
-    OutputStream onCreateOutStream() {
+    protected OutputStream onCreateOutStream() {
         return this.fileOutputStream;
     }
 
     @Override
-    File onChannelClosed() {
+    protected File onChannelClosed() {
+        try {
+            this.fileOutputStream.getFD().sync();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return this.file;
     }
 }

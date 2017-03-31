@@ -13,12 +13,12 @@ public class ByteArrayChannelReader extends ChannelReader<byte[]> {
     }
 
     @Override
-    OutputStream onCreateOutStream() {
+    protected OutputStream onCreateOutStream() {
         return this.byteArrayOutputStream = new ByteArrayOutputStream();
     }
 
     @Override
-    byte[] onChannelClosed() {
+    protected byte[] onChannelClosed() {
         return this.byteArrayOutputStream.toByteArray();
     }
 }

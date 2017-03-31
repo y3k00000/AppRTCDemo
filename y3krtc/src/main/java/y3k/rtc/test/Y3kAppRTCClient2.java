@@ -11,7 +11,7 @@
 package y3k.rtc.test;
 
 import android.app.Activity;
-import android.os.AsyncTask;
+import android.os.Environment;
 import android.util.Log;
 
 import org.appspot.apprtc.AppRTCClient;
@@ -30,10 +30,10 @@ import org.webrtc.SessionDescription;
 import org.webrtc.StatsReport;
 import org.webrtc.VideoRenderer;
 
-import java.nio.ByteBuffer;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Activity for peer connection call setup, call waiting
@@ -45,13 +45,8 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
 
     private static final String TAG = Y3kAppRTCClient2.class.getName();
 
-    // Peer connection statistics callback period in ms.
     private static final int STAT_CALLBACK_PERIOD = 1000;
-    private final List<VideoRenderer.Callbacks> remoteRenderers =
-            new ArrayList<>();
-    DataChannel dataChannel;
-    AsyncTask currentSendingTask;
-    private PeerConnectionClient peerConnectionClient = null;
+    private PeerConnectionClient peerConnectionClient = PeerConnectionClient.getInstance();
     private AppRTCClient appRtcClient;
     private SignalingParameters signalingParameters;
     private RoomConnectionParameters roomConnectionParameters;
@@ -61,9 +56,6 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
     public Y3kAppRTCClient2(Activity activity, String roomId) {
         iceConnected = false;
 
-        // Create video renderers.
-
-        // Get Intent parameters.
         boolean loopback = false;
         boolean tracing = false;
 
@@ -109,7 +101,6 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
         // Create connection parameters.
         roomConnectionParameters = new RoomConnectionParameters("https://appr.tc", roomId, false);
 
-        peerConnectionClient = PeerConnectionClient.getInstance();
         if (loopback) {
             PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
             options.networkIgnoreMask = 0;
@@ -166,7 +157,7 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
         Log.d(TAG, "onConnectedToRoom()");
         signalingParameters = params;
         peerConnectionClient.createPeerConnection(null, null,
-                remoteRenderers, null, signalingParameters);
+                new ArrayList<VideoRenderer.Callbacks>(), null, signalingParameters);
 
         if (signalingParameters.initiator) {
             // Create offer. Offer SDP will be sent to answering client in
@@ -288,50 +279,25 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
     @Override
     public void onPeerConnectionStatsReady(final StatsReport[] reports) {
         Log.d(TAG, "onPeerConnectionStatsReady(" + Arrays.toString(reports) + ");");
-        if (this.dataChannel == null) {
-            try {
-                this.dataChannel = this.newDataChannel("Y3kChannel");
-            } catch (IllegalStateException e) {
-                e.printStackTrace();
-            }
-        } else {
-            if (signalingParameters.initiator && currentSendingTask == null) {
-                this.currentSendingTask = new AsyncTask<Void, Void, Void>() {
-                    @Override
-                    protected Void doInBackground(Void... params) {
-                        byte[] stringToSendThroughChannel = "y3k is c o o l man and he doesn't give up.".getBytes();
-                        for (byte b : stringToSendThroughChannel) {
-                            ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{b});
-                            dataChannel.send(new DataChannel.Buffer(byteBuffer, true));
-                        }
-                        dataChannel.close();
-                        return null;
-                    }
-
-                    @Override
-                    protected void onPostExecute(Void aVoid) {
-                        super.onPostExecute(aVoid);
-                        dataChannel = null;
-                        currentSendingTask = null;
-                    }
-                }.execute();
-            }
-        }
     }
 
     @Override
     public void onDataChannel(final DataChannel dataChannel) {
-        Log.d(TAG, "onDataChannel("+dataChannel.id()+","+dataChannel.label()+","+dataChannel.state()+")");
-        dataChannel.registerObserver(new ByteArrayChannelReader(dataChannel).withCallback(new ChannelReader.Callback<byte[]>() {
-            @Override
-            public void onFinished(Exception e, byte[] result) {
-                if (e != null) {
-                    e.printStackTrace();
-                } else {
-                    Log.d("ChannelReader.Callback", new String(result));
+        Log.d(TAG, "onDataChannel(" + dataChannel.id() + "," + dataChannel.label() + "," + dataChannel.state() + ")");
+        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), dataChannel.label());
+        try {
+            file.createNewFile();
+            file.setWritable(true);
+            ChannelReader fileChannelReader = new FileChannelReader(dataChannel, file).withCallback(new ChannelReader.Callback<File>() {
+                @Override
+                public void onFinished(Exception e, File result) {
+                    Log.d("DataChannel.File", result.getName());
                 }
-            }
-        }));
+            });
+            fileChannelReader.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
