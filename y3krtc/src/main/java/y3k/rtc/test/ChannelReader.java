@@ -9,13 +9,12 @@ import java.io.OutputStream;
 
 public abstract class ChannelReader<T> implements DataChannel.Observer {
     private final DataChannel rtcDataChannel;
-    private final OutputStream targetOutputStream;
+    private OutputStream targetOutputStream;
     private Callback<T> callback;
 
     public ChannelReader(DataChannel dataChannel) {
         this.rtcDataChannel = dataChannel;
         this.rtcDataChannel.registerObserver(this);
-        this.targetOutputStream = this.onCreateOutStream();
     }
 
     public ChannelReader withCallback(Callback<T> callback) {
@@ -37,6 +36,8 @@ public abstract class ChannelReader<T> implements DataChannel.Observer {
             if (this.callback != null) {
                 this.callback.onFinished(null, result);
             }
+        } else if(this.rtcDataChannel.state()== DataChannel.State.OPEN&&this.targetOutputStream==null){
+            this.targetOutputStream = this.onCreateOutStream();
         }
     }
 
