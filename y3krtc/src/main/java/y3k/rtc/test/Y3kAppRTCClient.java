@@ -22,6 +22,7 @@ import org.appspot.apprtc.PeerConnectionClient.DataChannelParameters;
 import org.appspot.apprtc.PeerConnectionClient.PeerConnectionParameters;
 import org.appspot.apprtc.WebSocketChannelClient;
 import org.appspot.apprtc.WebSocketRTCClient;
+import org.webrtc.DataChannel;
 import org.webrtc.IceCandidate;
 import org.webrtc.SessionDescription;
 import org.webrtc.StatsReport;
@@ -254,5 +255,10 @@ public class Y3kAppRTCClient implements AppRTCClient.SignalingEvents,
     public void onPeerConnectionError(final String description) {
         Log.d(TAG, "onPeerConnectionError(" + description + ")");
         // TODO : onPeerConnectionError
+    }
+
+    @Override
+    public void onDataChannel(DataChannel dataChannel) {
+
     }
 }

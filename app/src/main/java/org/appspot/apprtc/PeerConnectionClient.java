@@ -176,7 +176,7 @@ public class PeerConnectionClient {
     public final boolean disableBuiltInAGC;
     public final boolean disableBuiltInNS;
     public final boolean enableLevelControl;
-    private final DataChannelParameters dataChannelParameters;
+    public final DataChannelParameters dataChannelParameters;
 
     public PeerConnectionParameters(boolean videoCallEnabled, boolean loopback, boolean tracing,
         int videoWidth, int videoHeight, int videoFps, int videoMaxBitrate, String videoCodec,
@@ -264,6 +264,8 @@ public class PeerConnectionClient {
      * Callback fired once peer connection error happened.
      */
     void onPeerConnectionError(final String description);
+
+      void onDataChannel(DataChannel dataChannel);
   }
 
   private PeerConnectionClient() {
@@ -551,13 +553,13 @@ public class PeerConnectionClient {
     Logging.enableTracing("logcat:", EnumSet.of(Logging.TraceLevel.TRACE_DEFAULT));
     Logging.enableLogToDebugOutput(Logging.Severity.LS_INFO);
 
-    mediaStream = factory.createLocalMediaStream("ARDAMS");
-    if (videoCallEnabled) {
-      mediaStream.addTrack(createVideoTrack(videoCapturer));
-    }
+//    mediaStream = factory.createLocalMediaStream("ARDAMS");
+//    if (videoCallEnabled) {
+//      mediaStream.addTrack(createVideoTrack(videoCapturer));
+//    }
 
-    mediaStream.addTrack(createAudioTrack());
-    peerConnection.addStream(mediaStream);
+//    mediaStream.addTrack(createAudioTrack());
+//    peerConnection.addStream(mediaStream);
     if (videoCallEnabled) {
       findVideoSender();
     }
@@ -1144,30 +1146,35 @@ public class PeerConnectionClient {
 
       if (!dataChannelEnabled)
         return;
-
-      dc.registerObserver(new DataChannel.Observer() {
-        public void onBufferedAmountChange(long previousAmount) {
-          Log.d(TAG, "Data channel buffered amount changed: " + dc.label() + ": " + dc.state());
-        }
-
+    executor.execute(new Runnable() {
         @Override
-        public void onStateChange() {
-          Log.d(TAG, "Data channel state changed: " + dc.label() + ": " + dc.state());
+        public void run() {
+            events.onDataChannel(dc);
         }
-
-        @Override
-        public void onMessage(final DataChannel.Buffer buffer) {
-          if (buffer.binary) {
-            Log.d(TAG, "Received binary msg over " + dc);
-            return;
-          }
-          ByteBuffer data = buffer.data;
-          final byte[] bytes = new byte[data.capacity()];
-          data.get(bytes);
-          String strData = new String(bytes);
-          Log.d(TAG, "Got msg: " + strData + " over " + dc);
-        }
-      });
+    });
+//      dc.registerObserver(new DataChannel.Observer() {
+//        public void onBufferedAmountChange(long previousAmount) {
+//          Log.d(TAG, "Data channel buffered amount changed: " + dc.label() + ": " + dc.state());
+//        }
+//
+//        @Override
+//        public void onStateChange() {
+//          Log.d(TAG, "Data channel state changed: " + dc.label() + ": " + dc.state());
+//        }
+//
+//        @Override
+//        public void onMessage(final DataChannel.Buffer buffer) {
+//          if (buffer.binary) {
+//            Log.d(TAG, "Received binary msg over " + dc);
+//            return;
+//          }
+//          ByteBuffer data = buffer.data;
+//          final byte[] bytes = new byte[data.capacity()];
+//          data.get(bytes);
+//          String strData = new String(bytes);
+//          Log.d(TAG, "Got msg: " + strData + " over " + dc);
+//        }
+//      });
     }
 
     @Override
@@ -1254,6 +1261,14 @@ public class PeerConnectionClient {
     @Override
     public void onSetFailure(final String error) {
       reportError("setSDP error: " + error);
+    }
+  }
+
+  public PeerConnection getPeerConnection() throws IllegalStateException{
+    if(this.peerConnection==null){
+      throw new IllegalStateException("peerConnection==null");
+    } else{
+      return this.peerConnection;
     }
   }
 }
