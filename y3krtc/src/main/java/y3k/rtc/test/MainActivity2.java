@@ -15,6 +15,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import org.json.JSONException;
 import org.webrtc.DataChannel;
 
 import java.io.File;
@@ -23,6 +24,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.UUID;
+
+import y3k.rtc.test.channeldescription.FileChannelDescription;
 
 public class MainActivity2 extends AppCompatActivity {
 
@@ -76,24 +80,24 @@ public class MainActivity2 extends AppCompatActivity {
                                 alertDialog.dismiss();
                                 try {
                                     final FileInputStream fileInputStream = new FileInputStream(files[position]);
-                                    dataChannel = MainActivity2.this.y3kAppRTCClient2.newDataChannel(files[position].getName());
+                                    dataChannel = MainActivity2.this.y3kAppRTCClient2.newDataChannel(new FileChannelDescription(UUID.randomUUID(), files[position].getName(), files[position].length()).toJSONObject().toString());
                                     new AsyncTask<Void, Integer, Void>() {
                                         ProgressDialog sendingProgressDialog;
                                         long totalSentByteCount = 0;
 
                                         @Override
                                         protected void onPreExecute() {
-                                            this.sendingProgressDialog = ProgressDialog.show(MainActivity2.this, "Sending", this.totalSentByteCount + "/" + files[position].length()+" bytes.");
+                                            this.sendingProgressDialog = ProgressDialog.show(MainActivity2.this, "Sending", this.totalSentByteCount + "/" + files[position].length() + " bytes.");
                                             super.onPreExecute();
                                         }
 
                                         @Override
                                         protected void onProgressUpdate(Integer... values) {
                                             super.onProgressUpdate(values);
-                                            for(Integer progress : values){
+                                            for (Integer progress : values) {
                                                 this.totalSentByteCount += progress;
                                             }
-                                            this.sendingProgressDialog.setMessage(totalSentByteCount + "/" + files[position].length()+" bytes.");
+                                            this.sendingProgressDialog.setMessage(totalSentByteCount + "/" + files[position].length() + " bytes.");
                                         }
 
                                         @Override
@@ -135,7 +139,7 @@ public class MainActivity2 extends AppCompatActivity {
                                             this.sendingProgressDialog.dismiss();
                                         }
                                     }.execute();
-                                } catch (IllegalStateException | FileNotFoundException e) {
+                                } catch (IllegalStateException | FileNotFoundException | JSONException e) {
                                     e.printStackTrace();
                                 }
                             }
