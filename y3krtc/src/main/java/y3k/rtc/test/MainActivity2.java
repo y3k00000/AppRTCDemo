@@ -40,7 +40,7 @@ public class MainActivity2 extends AppCompatActivity {
                     ((EditText) findViewById(R.id.editText)).setText("");
                 } else {
                     if (dataChannel == null) {
-                        final File[] files = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).listFiles();
+                        final File[] files = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).listFiles();
                         ListView listView = new ListView(MainActivity2.this);
                         listView.setAdapter(new BaseAdapter() {
                             @Override

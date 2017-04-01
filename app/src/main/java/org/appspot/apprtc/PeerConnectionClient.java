@@ -14,19 +14,7 @@ import android.content.Context;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 import org.appspot.apprtc.AppRTCClient.SignalingParameters;
 import org.webrtc.AudioSource;
 import org.webrtc.AudioTrack;
@@ -52,6 +40,19 @@ import org.webrtc.VideoSource;
 import org.webrtc.VideoTrack;
 import org.webrtc.voiceengine.WebRtcAudioManager;
 import org.webrtc.voiceengine.WebRtcAudioUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Peer connection client implementation.
@@ -128,8 +129,8 @@ public class PeerConnectionClient {
   // enableAudio is set to true if audio should be sent.
   private boolean enableAudio;
   private AudioTrack localAudioTrack;
-  private DataChannel dataChannel;
-  private boolean dataChannelEnabled;
+//  private DataChannel dataChannel;
+//  private boolean dataChannelEnabled;
 
   /**
    * Peer connection parameters.
@@ -176,7 +177,7 @@ public class PeerConnectionClient {
     public final boolean disableBuiltInAGC;
     public final boolean disableBuiltInNS;
     public final boolean enableLevelControl;
-    public final DataChannelParameters dataChannelParameters;
+//    public final DataChannelParameters dataChannelParameters;
 
     public PeerConnectionParameters(boolean videoCallEnabled, boolean loopback, boolean tracing,
         int videoWidth, int videoHeight, int videoFps, int videoMaxBitrate, String videoCodec,
@@ -215,7 +216,7 @@ public class PeerConnectionClient {
       this.disableBuiltInAGC = disableBuiltInAGC;
       this.disableBuiltInNS = disableBuiltInNS;
       this.enableLevelControl = enableLevelControl;
-      this.dataChannelParameters = dataChannelParameters;
+//      this.dataChannelParameters = dataChannelParameters;
     }
   }
 
@@ -288,7 +289,7 @@ public class PeerConnectionClient {
     this.peerConnectionParameters = peerConnectionParameters;
     this.events = events;
     videoCallEnabled = peerConnectionParameters.videoCallEnabled;
-    dataChannelEnabled = peerConnectionParameters.dataChannelParameters != null;
+//    dataChannelEnabled = peerConnectionParameters.dataChannelParameters != null;
     // Reset variables to initial states.
     this.context = null;
     factory = null;
@@ -536,16 +537,19 @@ public class PeerConnectionClient {
 
     peerConnection = factory.createPeerConnection(rtcConfig, pcConstraints, pcObserver);
 
-    if (dataChannelEnabled) {
-      DataChannel.Init init = new DataChannel.Init();
-      init.ordered = peerConnectionParameters.dataChannelParameters.ordered;
-      init.negotiated = peerConnectionParameters.dataChannelParameters.negotiated;
-      init.maxRetransmits = peerConnectionParameters.dataChannelParameters.maxRetransmits;
-      init.maxRetransmitTimeMs = peerConnectionParameters.dataChannelParameters.maxRetransmitTimeMs;
-      init.id = peerConnectionParameters.dataChannelParameters.id;
-      init.protocol = peerConnectionParameters.dataChannelParameters.protocol;
-      dataChannel = peerConnection.createDataChannel("ApprtcDemo data", init);
-    }
+    /*
+    Y3K : Disable default DataChannel building.
+     */
+//    if (dataChannelEnabled) {
+//      DataChannel.Init init = new DataChannel.Init();
+//      init.ordered = peerConnectionParameters.dataChannelParameters.ordered;
+//      init.negotiated = peerConnectionParameters.dataChannelParameters.negotiated;
+//      init.maxRetransmits = peerConnectionParameters.dataChannelParameters.maxRetransmits;
+//      init.maxRetransmitTimeMs = peerConnectionParameters.dataChannelParameters.maxRetransmitTimeMs;
+//      init.id = peerConnectionParameters.dataChannelParameters.id;
+//      init.protocol = peerConnectionParameters.dataChannelParameters.protocol;
+//      dataChannel = peerConnection.createDataChannel("ApprtcDemo data", init);
+//    }
     isInitiator = false;
 
     // Set default WebRTC tracing and INFO libjingle logging.
@@ -586,10 +590,10 @@ public class PeerConnectionClient {
     }
     Log.d(TAG, "Closing peer connection.");
     statsTimer.cancel();
-    if (dataChannel != null) {
-      dataChannel.dispose();
-      dataChannel = null;
-    }
+//    if (dataChannel != null) {
+//      dataChannel.dispose();
+//      dataChannel = null;
+//    }
     if (peerConnection != null) {
       peerConnection.dispose();
       peerConnection = null;
@@ -1144,8 +1148,11 @@ public class PeerConnectionClient {
     public void onDataChannel(final DataChannel dc) {
       Log.d(TAG, "New Data channel " + dc.label());
 
-      if (!dataChannelEnabled)
-        return;
+//      if (!dataChannelEnabled)
+//        return;
+      /*
+          Disable default DataChannel.Observer, transfer to Callback.
+       */
     executor.execute(new Runnable() {
         @Override
         public void run() {
