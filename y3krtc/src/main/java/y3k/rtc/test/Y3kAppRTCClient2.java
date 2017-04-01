@@ -11,8 +11,14 @@
 package y3k.rtc.test;
 
 import android.app.Activity;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Environment;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
+import android.webkit.MimeTypeMap;
+import android.widget.Toast;
 
 import org.appspot.apprtc.AppRTCClient;
 import org.appspot.apprtc.AppRTCClient.RoomConnectionParameters;
@@ -46,6 +52,7 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
     private static final String TAG = Y3kAppRTCClient2.class.getName();
 
     private static final int STAT_CALLBACK_PERIOD = 1000;
+    final Activity activity;
     private PeerConnectionClient peerConnectionClient = PeerConnectionClient.getInstance();
     private AppRTCClient appRtcClient;
     private SignalingParameters signalingParameters;
@@ -54,6 +61,7 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
     private boolean iceConnected;
 
     public Y3kAppRTCClient2(Activity activity, String roomId) {
+        this.activity = activity;
         iceConnected = false;
 
         boolean loopback = false;
@@ -285,17 +293,45 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
     public void onDataChannel(final DataChannel dataChannel) {
         Log.d(TAG, "onDataChannel(" + dataChannel.id() + "," + dataChannel.label() + "," + dataChannel.state() + ")");
         if (dataChannel.label().equals("ApprtcDemo data")) {
-            // ApprtcDamo default DataChannel
+            // ApprtcDamo default DataChannel -> skip
             return;
         }
-        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), dataChannel.label());
+        final File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), dataChannel.label());
         try {
+            if(file.exists()){
+                file.delete();
+            }
             file.createNewFile();
             file.setWritable(true);
             ChannelReader fileChannelReader = new FileChannelReader(dataChannel, file).withCallback(new ChannelReader.Callback<File>() {
                 @Override
-                public void onFinished(Exception e, File result) {
+                public void onFinished(Exception e, final File result) {
                     Log.d("DataChannel.File", result.getName());
+                    Y3kAppRTCClient2.this.activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            new AlertDialog.Builder(Y3kAppRTCClient2.this.activity)
+                                    .setTitle("File Received")
+                                    .setMessage("You'd like to open " + result.getName() + " ?")
+                                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            Intent openFileIntent = new Intent(Intent.ACTION_VIEW, Uri.fromFile(result));
+                                            if(file.getName().lastIndexOf(".")!=file.getName().length()){
+                                                openFileIntent.setType(MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.getName().substring(file.getName().lastIndexOf(".")+1)));
+                                            }
+                                            try {
+                                                Y3kAppRTCClient2.this.activity.startActivity(openFileIntent);
+                                            } catch (Exception e1) {
+                                                e1.printStackTrace();
+                                                Toast.makeText(Y3kAppRTCClient2.this.activity,e1.getMessage(),Toast.LENGTH_LONG).show();
+                                            }
+                                        }
+                                    })
+                                    .setNegativeButton("No", null)
+                                    .show();
+                        }
+                    });
                 }
             });
             fileChannelReader.start();
