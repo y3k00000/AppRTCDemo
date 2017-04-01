@@ -77,11 +77,11 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
                         0, //EXTRA_VIDEO_FPS
                         0, //EXTRA_VIDEO_BITRATE
                         "VP8", //EXTRA_VIDEOCODEC
-                        true, //EXTRA_HWCODEC_ENABLED
+                        false, //EXTRA_HWCODEC_ENABLED
                         false, //EXTRA_FLEXFEC_ENABLED
                         0, //EXTRA_AUDIO_BITRATE
                         "OPUS", //EXTRA_AUDIOCODEC
-                        false, //EXTRA_NOAUDIOPROCESSING_ENABLED
+                        true, //EXTRA_NOAUDIOPROCESSING_ENABLED
                         false, //EXTRA_AECDUMP_ENABLED
                         false, //EXTRA_OPENSLES_ENABLED
                         false, //EXTRA_DISABLE_BUILT_IN_AEC
@@ -284,6 +284,10 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
     @Override
     public void onDataChannel(final DataChannel dataChannel) {
         Log.d(TAG, "onDataChannel(" + dataChannel.id() + "," + dataChannel.label() + "," + dataChannel.state() + ")");
+        if (dataChannel.label().equals("ApprtcDemo data")) {
+            // ApprtcDamo default DataChannel
+            return;
+        }
         File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), dataChannel.label());
         try {
             file.createNewFile();

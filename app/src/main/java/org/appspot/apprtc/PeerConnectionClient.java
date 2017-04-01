@@ -536,6 +536,9 @@ public class PeerConnectionClient {
 
     peerConnection = factory.createPeerConnection(rtcConfig, pcConstraints, pcObserver);
 
+    /*
+        !!The default DataChannel seems required.
+     */
     if (dataChannelEnabled) {
       DataChannel.Init init = new DataChannel.Init();
       init.ordered = peerConnectionParameters.dataChannelParameters.ordered;
