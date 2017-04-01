@@ -19,6 +19,7 @@ import org.appspot.apprtc.AppRTCClient.RoomConnectionParameters;
 import org.appspot.apprtc.AppRTCClient.SignalingParameters;
 import org.appspot.apprtc.CallFragment;
 import org.appspot.apprtc.PeerConnectionClient;
+import org.appspot.apprtc.PeerConnectionClient.DataChannelParameters;
 import org.appspot.apprtc.PeerConnectionClient.PeerConnectionParameters;
 import org.appspot.apprtc.WebSocketRTCClient;
 import org.webrtc.DataChannel;
@@ -52,21 +53,19 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
     private PeerConnectionParameters peerConnectionParameters;
     private boolean iceConnected;
 
-    // Original default dataChannelParameters.
-//        DataChannelParameters dataChannelParameters = new DataChannelParameters(
-//                true, //EXTRA_ORDERED
-//                -1, //EXTRA_MAX_RETRANSMITS_MS
-//                -1, //EXTRA_MAX_RETRANSMITS
-//                "", //EXTRA_PROTOCOL
-//                false,//EXTRA_NEGOTIATED,
-//                -1);
-
-
     public Y3kAppRTCClient2(Activity activity, String roomId) {
         iceConnected = false;
 
         boolean loopback = false;
         boolean tracing = false;
+
+        DataChannelParameters dataChannelParameters = new DataChannelParameters(
+                true, //EXTRA_ORDERED
+                -1, //EXTRA_MAX_RETRANSMITS_MS
+                -1, //EXTRA_MAX_RETRANSMITS
+                "", //EXTRA_PROTOCOL
+                false,//EXTRA_NEGOTIATED,
+                -1);
 
         peerConnectionParameters =
                 new PeerConnectionParameters(
@@ -78,18 +77,18 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
                         0, //EXTRA_VIDEO_FPS
                         0, //EXTRA_VIDEO_BITRATE
                         "VP8", //EXTRA_VIDEOCODEC
-                        false, //EXTRA_HWCODEC_ENABLED
+                        true, //EXTRA_HWCODEC_ENABLED
                         false, //EXTRA_FLEXFEC_ENABLED
                         0, //EXTRA_AUDIO_BITRATE
                         "OPUS", //EXTRA_AUDIOCODEC
-                        true, //EXTRA_NOAUDIOPROCESSING_ENABLED
+                        false, //EXTRA_NOAUDIOPROCESSING_ENABLED
                         false, //EXTRA_AECDUMP_ENABLED
                         false, //EXTRA_OPENSLES_ENABLED
                         false, //EXTRA_DISABLE_BUILT_IN_AEC
                         false, //EXTRA_DISABLE_BUILT_IN_AGC
                         false, //EXTRA_DISABLE_BUILT_IN_NS
                         false, //EXTRA_ENABLE_LEVEL_CONTROL,
-                        null);
+                        dataChannelParameters);
 
         // Create connection client. Use DirectRTCClient if room name is an IP otherwise use the
         // standard WebSocketRTCClient.
@@ -311,12 +310,12 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
             throw new IllegalStateException("peerConnectionClient==null , you fool!!");
         } else {
             DataChannel.Init dataChannelInit = new DataChannel.Init();
-            dataChannelInit.ordered = true;
-            dataChannelInit.negotiated = false;
-            dataChannelInit.maxRetransmits = -1;
-            dataChannelInit.maxRetransmitTimeMs = -1;
-            dataChannelInit.id = -1;
-            dataChannelInit.protocol = "";
+            dataChannelInit.ordered = peerConnectionParameters.dataChannelParameters.ordered;
+            dataChannelInit.negotiated = peerConnectionParameters.dataChannelParameters.negotiated;
+            dataChannelInit.maxRetransmits = peerConnectionParameters.dataChannelParameters.maxRetransmits;
+            dataChannelInit.maxRetransmitTimeMs = peerConnectionParameters.dataChannelParameters.maxRetransmitTimeMs;
+            dataChannelInit.id = peerConnectionParameters.dataChannelParameters.id;
+            dataChannelInit.protocol = peerConnectionParameters.dataChannelParameters.protocol;
             return peerConnectionClient.getPeerConnection().createDataChannel(name, dataChannelInit);
         }
     }
