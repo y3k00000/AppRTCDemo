@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 
+@Deprecated
 public class MainActivity extends AppCompatActivity {
 
     Y3kAppRTCClient y3kAppRTCClient;

@@ -1,4 +1,4 @@
-package y3k.rtc.test;
+package y3k.rtc.test.channelreader;
 
 import org.webrtc.DataChannel;
 

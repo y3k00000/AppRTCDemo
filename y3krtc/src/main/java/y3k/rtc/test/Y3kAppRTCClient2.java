@@ -43,7 +43,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import y3k.rtc.test.announcement.DataChannelAcknowledgement;
+import y3k.rtc.test.announcement.DataChannelAnnouncement;
 import y3k.rtc.test.channeldescription.FileChannelDescription;
+import y3k.rtc.test.channelreader.ChannelReader;
+import y3k.rtc.test.channelreader.FileChannelReader;
 
 /**
  * Activity for peer connection call setup, call waiting
@@ -300,54 +304,113 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
 //            // ApprtcDamo default DataChannel -> skip
 //            return;
 //        }
-        try {
-            FileChannelDescription fileChannelDescription = new FileChannelDescription(new JSONObject(dataChannel.label()));
-            final File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileChannelDescription.getFileName());
-            try {
-                if (file.exists()) {
-                    file.delete();
+        if(dataChannel.label().equals("Manage")){
+            dataChannel.registerObserver(new DataChannel.Observer() {
+                @Override
+                public void onBufferedAmountChange(long l) {
+
                 }
-                file.createNewFile();
-                file.setWritable(true);
-                ChannelReader fileChannelReader = new FileChannelReader(dataChannel, file).withCallback(new ChannelReader.Callback<File>() {
-                    @Override
-                    public void onFinished(Exception e, final File result) {
-                        Log.d("DataChannel.File", result.getName());
-                        Y3kAppRTCClient2.this.activity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                new AlertDialog.Builder(Y3kAppRTCClient2.this.activity)
-                                        .setTitle("File Received")
-                                        .setMessage("You'd like to open " + result.getName() + " ?")
-                                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialog, int which) {
-                                                Intent openFileIntent = new Intent(Intent.ACTION_VIEW, Uri.fromFile(result));
-                                                if (file.getName().lastIndexOf(".") != file.getName().length()) {
-                                                    openFileIntent.setType(MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.getName().substring(file.getName().lastIndexOf(".") + 1)));
-                                                }
-                                                try {
-                                                    Y3kAppRTCClient2.this.activity.startActivity(openFileIntent);
-                                                } catch (Exception e1) {
-                                                    e1.printStackTrace();
-                                                    Toast.makeText(Y3kAppRTCClient2.this.activity, e1.getMessage(), Toast.LENGTH_LONG).show();
-                                                }
-                                            }
-                                        })
-                                        .setNegativeButton("No", null)
-                                        .show();
-                            }
-                        });
+
+                @Override
+                public void onStateChange() {
+                    Log.d(TAG, "Manage Channel onStateChanged("+dataChannel.state().name()+")");
+                }
+
+                @Override
+                public void onMessage(DataChannel.Buffer buffer) {
+                    byte[] receivedBytes = new byte[buffer.data.remaining()];
+                    buffer.data.get(receivedBytes);
+                    String receivedString = new String(receivedBytes);
+                    try{
+                        Y3kAppRTCClient2.this.onChannelAnnouncement(new DataChannelAnnouncement(new JSONObject(receivedString)));
+                    } catch (JSONException|IllegalArgumentException e){
+                        e.printStackTrace();
+                        try{
+                            Y3kAppRTCClient2.this.onChannelAcknowledgement(new DataChannelAcknowledgement(new JSONObject(receivedString)));
+                        } catch (JSONException|IllegalArgumentException e1){
+                            e1.printStackTrace();
+                        }
                     }
-                });
-                fileChannelReader.start();
-            } catch (IOException e) {
+                }
+            });
+            this.manageDataChannel = dataChannel;
+        } else {
+            try {
+                FileChannelDescription fileChannelDescription = new FileChannelDescription(new JSONObject(dataChannel.label()));
+                final File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileChannelDescription.getFileName());
+                try {
+                    if (file.exists()) {
+                        file.delete();
+                    }
+                    file.createNewFile();
+                    file.setWritable(true);
+                    ChannelReader fileChannelReader = new FileChannelReader(dataChannel, file).withCallback(new ChannelReader.Callback<File>() {
+                        @Override
+                        public void onFinished(Exception e, final File result) {
+                            Log.d("DataChannel.File", result.getName());
+                            Y3kAppRTCClient2.this.activity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    new AlertDialog.Builder(Y3kAppRTCClient2.this.activity)
+                                            .setTitle("File Received")
+                                            .setMessage("You'd like to open " + result.getName() + " ?")
+                                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    Intent openFileIntent = new Intent(Intent.ACTION_VIEW, Uri.fromFile(result));
+                                                    if (file.getName().lastIndexOf(".") != file.getName().length()) {
+                                                        openFileIntent.setType(MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.getName().substring(file.getName().lastIndexOf(".") + 1)));
+                                                    }
+                                                    try {
+                                                        Y3kAppRTCClient2.this.activity.startActivity(openFileIntent);
+                                                    } catch (Exception e1) {
+                                                        e1.printStackTrace();
+                                                        Toast.makeText(Y3kAppRTCClient2.this.activity, e1.getMessage(), Toast.LENGTH_LONG).show();
+                                                    }
+                                                }
+                                            })
+                                            .setNegativeButton("No", null)
+                                            .show();
+                                }
+                            });
+                        }
+                    });
+                    fileChannelReader.start();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } catch (JSONException e) {
                 e.printStackTrace();
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
         }
     }
+
+    DataChannel manageDataChannel;
+
+    private void onChannelAnnouncement(final DataChannelAnnouncement announcement){
+        switch (announcement.getType()){
+            case File:
+                new AlertDialog.Builder(this.activity)
+                        .setTitle("File Receiving")
+                        .setMessage("Receive file \""+((FileChannelDescription)announcement.getChannelDescription()).getFileName()+"\" ?")
+                        .setNegativeButton("NO",null)
+                        .setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Y3kAppRTCClient2.this.receivedAnnouncements.add(announcement);
+                            }
+                        }).show();
+                break;
+            default:
+        }
+    }
+
+    private void onChannelAcknowledgement(DataChannelAcknowledgement acknowledgement){
+        // TODO
+    }
+
+    private final ArrayList<DataChannelAnnouncement> sentAnnouncements = new ArrayList<>();
+    private final ArrayList<DataChannelAnnouncement> receivedAnnouncements = new ArrayList<>();
 
     @Override
     public void onPeerConnectionError(final String description) {

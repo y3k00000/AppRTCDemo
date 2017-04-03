@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+@Deprecated
 public class Y3kAppRTCClient implements AppRTCClient.SignalingEvents,
         PeerConnectionClient.PeerConnectionEvents {
 

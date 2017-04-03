@@ -548,6 +548,16 @@ public class PeerConnectionClient {
       init.id = peerConnectionParameters.dataChannelParameters.id;
       init.protocol = peerConnectionParameters.dataChannelParameters.protocol;
       dataChannel = peerConnection.createDataChannel("ApprtcDemo data", init);
+
+      // TODO : Temporary build Manage Channel here.
+      init = new DataChannel.Init();
+      init.ordered = peerConnectionParameters.dataChannelParameters.ordered;
+      init.negotiated = peerConnectionParameters.dataChannelParameters.negotiated;
+      init.maxRetransmits = peerConnectionParameters.dataChannelParameters.maxRetransmits;
+      init.maxRetransmitTimeMs = peerConnectionParameters.dataChannelParameters.maxRetransmitTimeMs;
+      init.id = peerConnectionParameters.dataChannelParameters.id;
+      init.protocol = peerConnectionParameters.dataChannelParameters.protocol;
+      dataChannel = peerConnection.createDataChannel("Manage", init);
     }
     isInitiator = false;
 
