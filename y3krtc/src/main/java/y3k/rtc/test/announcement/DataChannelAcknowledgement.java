@@ -12,7 +12,7 @@ public class DataChannelAcknowledgement {
     private final Reply reply;
 
     public DataChannelAcknowledgement(DataChannelAnnouncement announcementToReply, Reply reply) {
-        this.channelUUID = announcementToReply.channelDescription.getUUID();
+        this.channelUUID = announcementToReply.getChannelDescription().getUUID();
         this.reply = reply;
     }
 
