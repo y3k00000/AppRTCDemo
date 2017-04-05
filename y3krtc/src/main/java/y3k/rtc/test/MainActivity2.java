@@ -1,12 +1,9 @@
 package y3k.rtc.test;
 
-import android.app.ProgressDialog;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -15,23 +12,11 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import org.json.JSONException;
-import org.webrtc.DataChannel;
-
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.UUID;
-
-import y3k.rtc.test.channeldescription.FileChannelDescription;
 
 public class MainActivity2 extends AppCompatActivity {
 
     Y3kAppRTCClient2 y3kAppRTCClient2;
-    DataChannel dataChannel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,107 +29,42 @@ public class MainActivity2 extends AppCompatActivity {
                     y3kAppRTCClient2 = new Y3kAppRTCClient2(MainActivity2.this, ((EditText) findViewById(R.id.editText)).getText().toString());
                     findViewById(R.id.editText).setVisibility(View.INVISIBLE);
                 } else {
-                    if (dataChannel == null) {
-                        final File[] files = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).listFiles();
-                        ListView listView = new ListView(MainActivity2.this);
-                        listView.setAdapter(new BaseAdapter() {
-                            @Override
-                            public int getCount() {
-                                return files.length;
-                            }
+                    final File[] files = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).listFiles();
+                    ListView listView = new ListView(MainActivity2.this);
+                    listView.setAdapter(new BaseAdapter() {
+                        @Override
+                        public int getCount() {
+                            return files.length;
+                        }
 
-                            @Override
-                            public Object getItem(int position) {
-                                return files[position];
-                            }
+                        @Override
+                        public Object getItem(int position) {
+                            return files[position];
+                        }
 
-                            @Override
-                            public long getItemId(int position) {
-                                return 0;
-                            }
+                        @Override
+                        public long getItemId(int position) {
+                            return 0;
+                        }
 
-                            @Override
-                            public View getView(int position, View convertView, ViewGroup parent) {
-                                TextView textView = new TextView(MainActivity2.this);
-                                textView.setText(files[position].getName());
-                                textView.setTag(files[position]);
-                                return textView;
-                            }
-                        });
-                        final AlertDialog alertDialog = new AlertDialog.Builder(MainActivity2.this)
-                                .setView(listView)
-                                .show();
-                        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                            @Override
-                            public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-                                alertDialog.dismiss();
-                                try {
-                                    final FileInputStream fileInputStream = new FileInputStream(files[position]);
-                                    dataChannel = MainActivity2.this.y3kAppRTCClient2.newDataChannel(new FileChannelDescription(UUID.randomUUID(), files[position].getName(), files[position].length()).toJSONObject().toString());
-                                    new AsyncTask<Void, Integer, Void>() {
-                                        ProgressDialog sendingProgressDialog;
-                                        long totalSentByteCount = 0;
-
-                                        @Override
-                                        protected void onPreExecute() {
-                                            this.sendingProgressDialog = ProgressDialog.show(MainActivity2.this, "Sending", this.totalSentByteCount + "/" + files[position].length() + " bytes.");
-                                            super.onPreExecute();
-                                        }
-
-                                        @Override
-                                        protected void onProgressUpdate(Integer... values) {
-                                            super.onProgressUpdate(values);
-                                            for (Integer progress : values) {
-                                                this.totalSentByteCount += progress;
-                                            }
-                                            this.sendingProgressDialog.setMessage(totalSentByteCount + "/" + files[position].length() + " bytes.");
-                                        }
-
-                                        @Override
-                                        protected Void doInBackground(Void... params) {
-                                            while (dataChannel.state() != DataChannel.State.OPEN) {
-                                                try {
-                                                    Thread.sleep(1000);
-                                                } catch (InterruptedException e) {
-                                                    e.printStackTrace();
-                                                }
-                                            }
-                                            byte[] readBuffer = new byte[51200];
-                                            try {
-                                                for (int read; (read = fileInputStream.read(readBuffer)) > 0; ) {
-                                                    Log.d("SendFile", "sent " + read);
-                                                    ByteBuffer byteBuffer = ByteBuffer.wrap(Arrays.copyOf(readBuffer, read));
-                                                    dataChannel.send(new DataChannel.Buffer(byteBuffer, true));
-                                                    this.publishProgress(read);
-                                                    while (dataChannel.bufferedAmount() > 0) {
-                                                        Log.d("SendFile", "dataChannel.bufferedAmount = " + dataChannel.bufferedAmount());
-                                                        try {
-                                                            Thread.sleep(50);
-                                                        } catch (InterruptedException e) {
-                                                            e.printStackTrace();
-                                                        }
-                                                    }
-                                                }
-                                            } catch (IOException e) {
-                                                e.printStackTrace();
-                                            }
-                                            dataChannel.close();
-                                            return null;
-                                        }
-
-                                        @Override
-                                        protected void onPostExecute(Void aVoid) {
-                                            super.onPostExecute(aVoid);
-                                            dataChannel = null;
-                                            this.sendingProgressDialog.dismiss();
-                                        }
-                                    }.execute();
-                                } catch (IllegalStateException | FileNotFoundException | JSONException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
-                    }
+                        @Override
+                        public View getView(int position, View convertView, ViewGroup parent) {
+                            TextView textView = new TextView(MainActivity2.this);
+                            textView.setText(files[position].getName());
+                            textView.setTag(files[position]);
+                            return textView;
+                        }
+                    });
+                    final AlertDialog alertDialog = new AlertDialog.Builder(MainActivity2.this)
+                            .setView(listView)
+                            .show();
+                    listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+                            alertDialog.dismiss();
+                            MainActivity2.this.y3kAppRTCClient2.openSendFileAnnouncement(files[position]);
+                        }
+                    });
                 }
             }
         });

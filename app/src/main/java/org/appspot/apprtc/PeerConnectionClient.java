@@ -128,7 +128,7 @@ public class PeerConnectionClient {
   // enableAudio is set to true if audio should be sent.
   private boolean enableAudio;
   private AudioTrack localAudioTrack;
-  private DataChannel dataChannel;
+  private DataChannel dataChannel, manageDataChannel;
   private boolean dataChannelEnabled;
 
   /**
@@ -557,7 +557,7 @@ public class PeerConnectionClient {
       init.maxRetransmitTimeMs = peerConnectionParameters.dataChannelParameters.maxRetransmitTimeMs;
       init.id = peerConnectionParameters.dataChannelParameters.id;
       init.protocol = peerConnectionParameters.dataChannelParameters.protocol;
-      dataChannel = peerConnection.createDataChannel("Manage", init);
+      manageDataChannel = peerConnection.createDataChannel("Manage", init);
     }
     isInitiator = false;
 
@@ -602,6 +602,10 @@ public class PeerConnectionClient {
     if (dataChannel != null) {
       dataChannel.dispose();
       dataChannel = null;
+    }
+    if(manageDataChannel!=null){
+      manageDataChannel.dispose();
+      manageDataChannel = null;
     }
     if (peerConnection != null) {
       peerConnection.dispose();
@@ -1275,6 +1279,10 @@ public class PeerConnectionClient {
     public void onSetFailure(final String error) {
       reportError("setSDP error: " + error);
     }
+  }
+
+  public DataChannel getManageDataChannel(){
+    return this.manageDataChannel;
   }
 
   public PeerConnection getPeerConnection() throws IllegalStateException{

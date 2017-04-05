@@ -3,8 +3,9 @@ package y3k.rtc.test;
 import org.appspot.apprtc.WebSocketChannelClient;
 import org.appspot.apprtc.WebSocketRTCClient;
 
+@Deprecated
 public class LameWebSocketRTCClient extends WebSocketRTCClient {
-    final WebSocketChannelClient.WebSocketChannelEvents webSocketCallback;
+    private final WebSocketChannelClient.WebSocketChannelEvents webSocketCallback;
     public LameWebSocketRTCClient(SignalingEvents eventsCallBack, WebSocketChannelClient.WebSocketChannelEvents callback){
         super(eventsCallBack);
         this.webSocketCallback = callback;

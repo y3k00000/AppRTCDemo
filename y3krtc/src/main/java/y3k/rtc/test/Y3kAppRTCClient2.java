@@ -11,9 +11,11 @@
 package y3k.rtc.test;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
@@ -39,9 +41,13 @@ import org.webrtc.StatsReport;
 import org.webrtc.VideoRenderer;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.UUID;
 
 import y3k.rtc.test.announcement.DataChannelAcknowledgement;
 import y3k.rtc.test.announcement.DataChannelAnnouncement;
@@ -277,7 +283,7 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
     public void onIceConnected() {
         Log.d(TAG, "onIceConnected()");
         iceConnected = true;
-        peerConnectionClient.enableStatsEvents(true, STAT_CALLBACK_PERIOD);
+//        peerConnectionClient.enableStatsEvents(true, STAT_CALLBACK_PERIOD);
     }
 
     @Override
@@ -304,7 +310,8 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
 //            // ApprtcDamo default DataChannel -> skip
 //            return;
 //        }
-        if(dataChannel.label().equals("Manage")){
+        if (dataChannel.label().equals("Manage")) {
+            Log.d(Y3kAppRTCClient2.TAG, "got Manage Channel!!");
             dataChannel.registerObserver(new DataChannel.Observer() {
                 @Override
                 public void onBufferedAmountChange(long l) {
@@ -313,21 +320,22 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
 
                 @Override
                 public void onStateChange() {
-                    Log.d(TAG, "Manage Channel onStateChanged("+dataChannel.state().name()+")");
+                    Log.d(TAG, "Manage Channel onStateChanged(" + dataChannel.state().name() + ")");
                 }
 
                 @Override
                 public void onMessage(DataChannel.Buffer buffer) {
+                    Log.d(TAG, "Manage Channel onMessage!!");
                     byte[] receivedBytes = new byte[buffer.data.remaining()];
                     buffer.data.get(receivedBytes);
                     String receivedString = new String(receivedBytes);
-                    try{
+                    try {
                         Y3kAppRTCClient2.this.onChannelAnnouncement(new DataChannelAnnouncement(new JSONObject(receivedString)));
-                    } catch (JSONException|IllegalArgumentException e){
+                    } catch (JSONException | IllegalArgumentException e) {
                         e.printStackTrace();
-                        try{
+                        try {
                             Y3kAppRTCClient2.this.onChannelAcknowledgement(new DataChannelAcknowledgement(new JSONObject(receivedString)));
-                        } catch (JSONException|IllegalArgumentException e1){
+                        } catch (JSONException | IllegalArgumentException e1) {
                             e1.printStackTrace();
                         }
                     }
@@ -346,31 +354,35 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
                     file.setWritable(true);
                     ChannelReader fileChannelReader = new FileChannelReader(dataChannel, file).withCallback(new ChannelReader.Callback<File>() {
                         @Override
-                        public void onFinished(Exception e, final File result) {
+                        public void onFinished(final Exception e, final File result) {
                             Log.d("DataChannel.File", result.getName());
                             Y3kAppRTCClient2.this.activity.runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    new AlertDialog.Builder(Y3kAppRTCClient2.this.activity)
-                                            .setTitle("File Received")
-                                            .setMessage("You'd like to open " + result.getName() + " ?")
-                                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                    Intent openFileIntent = new Intent(Intent.ACTION_VIEW, Uri.fromFile(result));
-                                                    if (file.getName().lastIndexOf(".") != file.getName().length()) {
-                                                        openFileIntent.setType(MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.getName().substring(file.getName().lastIndexOf(".") + 1)));
+                                    if (e != null) {
+                                        Toast.makeText(Y3kAppRTCClient2.this.activity, "File receive error!!\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+                                    } else {
+                                        new AlertDialog.Builder(Y3kAppRTCClient2.this.activity)
+                                                .setTitle("File Received")
+                                                .setMessage("You'd like to open " + result.getName() + " ?")
+                                                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        Intent openFileIntent = new Intent(Intent.ACTION_VIEW, Uri.fromFile(result));
+                                                        if (file.getName().lastIndexOf(".") != file.getName().length()) {
+                                                            openFileIntent.setType(MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.getName().substring(file.getName().lastIndexOf(".") + 1)));
+                                                        }
+                                                        try {
+                                                            Y3kAppRTCClient2.this.activity.startActivity(openFileIntent);
+                                                        } catch (Exception e1) {
+                                                            e1.printStackTrace();
+                                                            Toast.makeText(Y3kAppRTCClient2.this.activity, e1.getMessage(), Toast.LENGTH_LONG).show();
+                                                        }
                                                     }
-                                                    try {
-                                                        Y3kAppRTCClient2.this.activity.startActivity(openFileIntent);
-                                                    } catch (Exception e1) {
-                                                        e1.printStackTrace();
-                                                        Toast.makeText(Y3kAppRTCClient2.this.activity, e1.getMessage(), Toast.LENGTH_LONG).show();
-                                                    }
-                                                }
-                                            })
-                                            .setNegativeButton("No", null)
-                                            .show();
+                                                })
+                                                .setNegativeButton("No", null)
+                                                .show();
+                                    }
                                 }
                             });
                         }
@@ -387,26 +399,146 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
 
     DataChannel manageDataChannel;
 
-    private void onChannelAnnouncement(final DataChannelAnnouncement announcement){
-        switch (announcement.getType()){
+    private void onChannelAnnouncement(final DataChannelAnnouncement announcement) {
+        try {
+            Log.d(TAG, "onChannelAnnouncement(" + announcement.toJSONObject().toString() + ")");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        switch (announcement.getType()) {
             case File:
-                new AlertDialog.Builder(this.activity)
-                        .setTitle("File Receiving")
-                        .setMessage("Receive file \""+((FileChannelDescription)announcement.getChannelDescription()).getFileName()+"\" ?")
-                        .setNegativeButton("NO",null)
-                        .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Y3kAppRTCClient2.this.receivedAnnouncements.add(announcement);
-                            }
-                        }).show();
+                this.activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        new AlertDialog.Builder(Y3kAppRTCClient2.this.activity)
+                                .setTitle("File Receiving")
+                                .setMessage("Receive file \"" + ((FileChannelDescription) announcement.getChannelDescription()).getFileName() + "\" ?")
+                                .setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        try {
+                                            Y3kAppRTCClient2.this.peerConnectionClient.getManageDataChannel().send(new DataChannel.Buffer(ByteBuffer.wrap(new DataChannelAcknowledgement(announcement, DataChannelAcknowledgement.Reply.REFUSE).toJSONObject().toString().getBytes()), true));
+                                        } catch (JSONException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                })
+                                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        try {
+                                            Y3kAppRTCClient2.this.peerConnectionClient.getManageDataChannel().send(new DataChannel.Buffer(ByteBuffer.wrap(new DataChannelAcknowledgement(announcement, DataChannelAcknowledgement.Reply.NOTED).toJSONObject().toString().getBytes()), true));
+                                            Y3kAppRTCClient2.this.receivedAnnouncements.add(announcement);
+                                        } catch (JSONException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }).show();
+                    }
+                });
                 break;
             default:
         }
     }
 
-    private void onChannelAcknowledgement(DataChannelAcknowledgement acknowledgement){
-        // TODO
+    private void onChannelAcknowledgement(final DataChannelAcknowledgement acknowledgement) {
+        try {
+            Log.d(TAG, "onChannelAcknowledgement(" + acknowledgement.toJSONObject().toString() + ")");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        switch (acknowledgement.getReply()) {
+            case NOTED:
+                for (final DataChannelAnnouncement announcement : new ArrayList<>(this.sentAnnouncements)) {
+                    if (announcement.getChannelDescription().getUUID().compareTo(acknowledgement.getChannelUUID()) == 0) {
+                        if (announcement.getChannelDescription() instanceof FileChannelDescription) {
+                            final File localFile = ((FileChannelDescription) announcement.getChannelDescription()).getLocalFile();
+                            this.activity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        final FileInputStream fileInputStream = new FileInputStream(localFile);
+                                        final DataChannel dataChannel = Y3kAppRTCClient2.this.newDataChannel(announcement.getChannelDescription().toJSONObject().toString());
+                                        new AsyncTask<Void, Integer, Void>() {
+                                            ProgressDialog sendingProgressDialog;
+                                            long totalSentByteCount = 0;
+
+                                            @Override
+                                            protected void onPreExecute() {
+                                                this.sendingProgressDialog = ProgressDialog.show(Y3kAppRTCClient2.this.activity, "Sending", this.totalSentByteCount + "/" + localFile.length() + " bytes.");
+                                                super.onPreExecute();
+                                            }
+
+                                            @Override
+                                            protected void onProgressUpdate(Integer... values) {
+                                                super.onProgressUpdate(values);
+                                                for (Integer progress : values) {
+                                                    this.totalSentByteCount += progress;
+                                                }
+                                                this.sendingProgressDialog.setMessage(totalSentByteCount + "/" + localFile.length() + " bytes.");
+                                            }
+
+                                            @Override
+                                            protected Void doInBackground(Void... params) {
+                                                while (dataChannel.state() != DataChannel.State.OPEN) {
+                                                    try {
+                                                        Thread.sleep(1000);
+                                                    } catch (InterruptedException e) {
+                                                        e.printStackTrace();
+                                                    }
+                                                }
+                                                byte[] readBuffer = new byte[51200];
+                                                try {
+                                                    for (int read; (read = fileInputStream.read(readBuffer)) > 0; ) {
+                                                        Log.d("SendFile", "sent " + read);
+                                                        ByteBuffer byteBuffer = ByteBuffer.wrap(Arrays.copyOf(readBuffer, read));
+                                                        dataChannel.send(new DataChannel.Buffer(byteBuffer, true));
+                                                        this.publishProgress(read);
+                                                        while (dataChannel.bufferedAmount() > 0) {
+                                                            Log.d("SendFile", "dataChannel.bufferedAmount = " + dataChannel.bufferedAmount());
+                                                            try {
+                                                                Thread.sleep(50);
+                                                            } catch (InterruptedException e) {
+                                                                e.printStackTrace();
+                                                            }
+                                                        }
+                                                    }
+                                                } catch (IOException e) {
+                                                    e.printStackTrace();
+                                                }
+                                                dataChannel.close();
+                                                return null;
+                                            }
+
+                                            @Override
+                                            protected void onPostExecute(Void aVoid) {
+                                                super.onPostExecute(aVoid);
+                                                this.sendingProgressDialog.dismiss();
+                                            }
+                                        }.execute();
+                                    } catch (IllegalStateException | FileNotFoundException | JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            });
+                        } else {
+                            // TODO : else
+                        }
+                        this.sentAnnouncements.remove(announcement);
+                        return;
+                    }
+                }
+                break;
+            case REFUSE:
+                for (DataChannelAnnouncement announcement : new ArrayList<>(this.sentAnnouncements)) {
+                    if (announcement.getChannelDescription().getUUID().compareTo(acknowledgement.getChannelUUID()) == 0) {
+                        this.sentAnnouncements.remove(announcement);
+                    }
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     private final ArrayList<DataChannelAnnouncement> sentAnnouncements = new ArrayList<>();
@@ -429,6 +561,16 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
             dataChannelInit.id = peerConnectionParameters.dataChannelParameters.id;
             dataChannelInit.protocol = peerConnectionParameters.dataChannelParameters.protocol;
             return peerConnectionClient.getPeerConnection().createDataChannel(name, dataChannelInit);
+        }
+    }
+
+    public void openSendFileAnnouncement(File file) {
+        try {
+            DataChannelAnnouncement announcement = new DataChannelAnnouncement(new FileChannelDescription(UUID.randomUUID(), file.getName(), file, file.length()));
+            this.peerConnectionClient.getManageDataChannel().send(new DataChannel.Buffer(ByteBuffer.wrap(announcement.toJSONObject().toString().getBytes()), true));
+            this.sentAnnouncements.add(announcement);
+        } catch (IllegalArgumentException | JSONException e) {
+            e.printStackTrace();
         }
     }
 }
