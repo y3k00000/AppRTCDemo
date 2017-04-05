@@ -365,7 +365,12 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
                                 @Override
                                 public boolean onReadBytes(long count) {
                                     totalRead += count;
-                                    progressDialog.setMessage(totalRead + " out of " + fileChannelDescription.getFileLength() + " bytes received...");
+                                    Y3kAppRTCClient2.this.activity.runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            progressDialog.setMessage(totalRead + " out of " + fileChannelDescription.getFileLength() + " bytes received...");
+                                        }
+                                    });
                                     return true;
                                 }
 
