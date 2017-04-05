@@ -7,6 +7,7 @@ import org.webrtc.DataChannel;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.concurrent.CancellationException;
 
 public abstract class ChannelReader<T> {
     private final DataChannel rtcDataChannel;
@@ -37,6 +38,14 @@ public abstract class ChannelReader<T> {
             Log.d(this.getClass().getSimpleName(), "onMessage(" + buffer.data.remaining() + ")");
             byte[] receivedBytes = new byte[buffer.data.remaining()];
             buffer.data.get(receivedBytes);
+            if(!ChannelReader.this.callback.onReadBytes(receivedBytes.length)){
+                if(ChannelReader.this.rtcDataChannel.state()!= DataChannel.State.CLOSED) {
+                    ChannelReader.this.rtcDataChannel.unregisterObserver();
+                    ChannelReader.this.rtcDataChannel.dispose();
+                }
+                ChannelReader.this.callback.onFinished(new CancellationException("Cancelled data channel reading!!"),null);
+                return;
+            }
             if (ChannelReader.this.targetOutputStream == null && (ChannelReader.this.targetOutputStream = ChannelReader.this.onCreateOutStream()) == null) {
                 bufferedMessages.add(receivedBytes);
                 return;
@@ -76,6 +85,14 @@ public abstract class ChannelReader<T> {
     protected abstract T onChannelClosed();
 
     public interface Callback<T> {
+        /**
+         * For receiving progress of reading bytes from the channel.
+         *
+         * @param count last amount of bytes read.
+         * @return false to stop current reading progress, true to continue instead.
+         */
+        boolean onReadBytes(long count);
+
         void onFinished(Exception e, T result);
     }
 }
