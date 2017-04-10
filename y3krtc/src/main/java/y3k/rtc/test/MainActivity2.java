@@ -17,17 +17,20 @@ import java.io.File;
 public class MainActivity2 extends AppCompatActivity {
 
     Y3kAppRTCClient2 y3kAppRTCClient2;
+    Y3kAppRTCClient2 y3kAppRTCClient22;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        (findViewById(R.id.button)).setOnClickListener(new View.OnClickListener() {
+        (findViewById(R.id.button1)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (MainActivity2.this.y3kAppRTCClient2 == null) {
                     y3kAppRTCClient2 = new Y3kAppRTCClient2(MainActivity2.this, ((EditText) findViewById(R.id.editText)).getText().toString());
                     findViewById(R.id.editText).setVisibility(View.INVISIBLE);
+                } else if(MainActivity2.this.y3kAppRTCClient22==null){
+                    y3kAppRTCClient22 = new Y3kAppRTCClient2(MainActivity2.this, ((EditText) findViewById(R.id.editText)).getText().toString()+"_2");
                 } else {
                     final File[] files = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).listFiles();
                     ListView listView = new ListView(MainActivity2.this);
@@ -63,6 +66,7 @@ public class MainActivity2 extends AppCompatActivity {
                         public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
                             alertDialog.dismiss();
                             MainActivity2.this.y3kAppRTCClient2.openSendFileAnnouncement(files[position]);
+                            MainActivity2.this.y3kAppRTCClient22.openSendFileAnnouncement(files[position]);
                         }
                     });
                 }
@@ -73,6 +77,7 @@ public class MainActivity2 extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         y3kAppRTCClient2.onDestroy();
+        y3kAppRTCClient22.onDestroy();
         super.onDestroy();
     }
 }

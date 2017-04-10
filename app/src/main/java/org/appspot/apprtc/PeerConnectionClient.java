@@ -268,7 +268,7 @@ public class PeerConnectionClient {
       void onDataChannel(DataChannel dataChannel);
   }
 
-  private PeerConnectionClient() {
+  public PeerConnectionClient() {
     // Executor thread is started once in private ctor and is used for all
     // peer connection API calls to ensure new peer connection factory is
     // created on the same thread as previously destroyed factory.
@@ -361,8 +361,8 @@ public class PeerConnectionClient {
   }
 
   private void createPeerConnectionFactoryInternal(Context context) {
-    PeerConnectionFactory.initializeInternalTracer();
     if (peerConnectionParameters.tracing) {
+      PeerConnectionFactory.initializeInternalTracer();
       PeerConnectionFactory.startInternalTracingCapture(
           Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator
           + "webrtc-trace.txt");
@@ -640,8 +640,10 @@ public class PeerConnectionClient {
     options = null;
     Log.d(TAG, "Closing peer connection done.");
     events.onPeerConnectionClosed();
-    PeerConnectionFactory.stopInternalTracingCapture();
-    PeerConnectionFactory.shutdownInternalTracer();
+    if(this.peerConnectionParameters.tracing) {
+      PeerConnectionFactory.stopInternalTracingCapture();
+      PeerConnectionFactory.shutdownInternalTracer();
+    }
   }
 
   public boolean isHDVideo() {

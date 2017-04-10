@@ -117,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        (findViewById(R.id.button)).setOnClickListener(new View.OnClickListener() {
+        (findViewById(R.id.button1)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (MainActivity.this.y3kAppRTCClient == null) {

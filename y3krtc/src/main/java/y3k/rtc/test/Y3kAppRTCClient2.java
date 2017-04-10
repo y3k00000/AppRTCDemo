@@ -25,7 +25,6 @@ import android.widget.Toast;
 import org.appspot.apprtc.AppRTCClient;
 import org.appspot.apprtc.AppRTCClient.RoomConnectionParameters;
 import org.appspot.apprtc.AppRTCClient.SignalingParameters;
-import org.appspot.apprtc.CallFragment;
 import org.appspot.apprtc.PeerConnectionClient;
 import org.appspot.apprtc.PeerConnectionClient.DataChannelParameters;
 import org.appspot.apprtc.PeerConnectionClient.PeerConnectionParameters;
@@ -35,7 +34,6 @@ import org.json.JSONObject;
 import org.webrtc.DataChannel;
 import org.webrtc.IceCandidate;
 import org.webrtc.PeerConnectionFactory;
-import org.webrtc.RendererCommon.ScalingType;
 import org.webrtc.SessionDescription;
 import org.webrtc.StatsReport;
 import org.webrtc.VideoRenderer;
@@ -60,8 +58,7 @@ import y3k.rtc.test.channelreader.FileChannelReader;
  * and call view.
  */
 public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
-        PeerConnectionClient.PeerConnectionEvents,
-        CallFragment.OnCallEvents {
+        PeerConnectionClient.PeerConnectionEvents{
 
     private static final String TAG = Y3kAppRTCClient2.class.getName();
 
@@ -70,7 +67,7 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
     private final ArrayList<DataChannelAnnouncement> sentAnnouncements = new ArrayList<>();
     private final ArrayList<DataChannelAnnouncement> receivedAnnouncements = new ArrayList<>();
     DataChannel manageDataChannel;
-    private PeerConnectionClient peerConnectionClient = PeerConnectionClient.getInstance();
+    private PeerConnectionClient peerConnectionClient = new PeerConnectionClient();
     private AppRTCClient appRtcClient;
     private SignalingParameters signalingParameters;
     private RoomConnectionParameters roomConnectionParameters;
@@ -138,31 +135,6 @@ public class Y3kAppRTCClient2 implements AppRTCClient.SignalingEvents,
     }
 
     protected void onDestroy() {
-        disconnect();
-    }
-
-    @Override
-    public void onCameraSwitch() {
-
-    }
-
-    @Override
-    public void onVideoScalingSwitch(ScalingType scalingType) {
-
-    }
-
-    @Override
-    public void onCaptureFormatChange(int width, int height, int framerate) {
-
-    }
-
-    @Override
-    public boolean onToggleMic() {
-        return false;
-    }
-
-    @Override
-    public void onCallHangUp() {
         disconnect();
     }
 
