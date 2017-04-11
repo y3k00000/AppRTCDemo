@@ -5,8 +5,10 @@ import org.json.JSONObject;
 
 import java.util.Date;
 
+import y3k.rtc.test.Y3kAppRtcRoom;
 import y3k.rtc.test.channeldescription.DataChannelDescription;
 import y3k.rtc.test.channeldescription.FileChannelDescription;
+import y3k.rtc.test.channeldescription.FileStreamChannelDescription;
 
 public class DataChannelAnnouncement {
     private final static String JSON_TAG_ANNOUNCEMENT_TYPE = "announcement_type";
@@ -15,23 +17,31 @@ public class DataChannelAnnouncement {
     private final DataChannelDescription channelDescription;
     private final AnnouncementType type;
     private final double timeStamp;
+    private final Y3kAppRtcRoom room;
 
-    public DataChannelAnnouncement(DataChannelDescription channelDescription) throws IllegalArgumentException {
+    public DataChannelAnnouncement(Y3kAppRtcRoom room, DataChannelDescription channelDescription) throws IllegalArgumentException {
+        this.room = room;
         this.channelDescription = channelDescription;
         if (this.channelDescription instanceof FileChannelDescription) {
             this.type = AnnouncementType.File;
-        } else {
+        } else if(this.channelDescription instanceof FileStreamChannelDescription){
+            this.type = AnnouncementType.FileStream;
+        } else{
             throw new IllegalArgumentException("Illegal Description Type!!!");
         }
         this.timeStamp = new Date().getTime();
     }
 
-    public DataChannelAnnouncement(JSONObject jsonObject) throws JSONException, IllegalArgumentException {
+    public DataChannelAnnouncement(Y3kAppRtcRoom room,JSONObject jsonObject) throws JSONException, IllegalArgumentException {
+        this.room = room;
         this.type = AnnouncementType.valueOf(jsonObject.getString(JSON_TAG_ANNOUNCEMENT_TYPE));
         this.timeStamp = jsonObject.getLong(JSON_TAG_ANNOUNCEMENT_TIMESTAMP);
         switch (this.type) {
             case File:
                 this.channelDescription = new FileChannelDescription(jsonObject.getJSONObject(JSON_TAG_ANNOUNCEMENT_DESCRIPTION));
+                break;
+            case FileStream:
+                this.channelDescription = new FileStreamChannelDescription(jsonObject.getJSONObject(JSON_TAG_ANNOUNCEMENT_DESCRIPTION));
                 break;
             default:
                 throw new IllegalArgumentException("Illegal Description Type!!!");
@@ -54,6 +64,18 @@ public class DataChannelAnnouncement {
     }
 
     public enum AnnouncementType {
-        File, Event
+        File, FileStream, Event
+    }
+
+    public double getTimeStamp() {
+        return this.timeStamp;
+    }
+
+    public final void accept(){
+        this.room.onAnnouncementAccepted(this);
+    }
+
+    public final void decline(){
+        this.room.onAnnouncementDeclined(this);
     }
 }

@@ -128,7 +128,7 @@ public class PeerConnectionClient {
   // enableAudio is set to true if audio should be sent.
   private boolean enableAudio;
   private AudioTrack localAudioTrack;
-  private DataChannel dataChannel, manageDataChannel;
+  private DataChannel dataChannel, manageDataChannel, messageDataChannel;
   private boolean dataChannelEnabled;
 
   /**
@@ -549,7 +549,6 @@ public class PeerConnectionClient {
       init.protocol = peerConnectionParameters.dataChannelParameters.protocol;
       dataChannel = peerConnection.createDataChannel("ApprtcDemo data", init);
 
-      // TODO : Temporary build Manage Channel here.
       init = new DataChannel.Init();
       init.ordered = peerConnectionParameters.dataChannelParameters.ordered;
       init.negotiated = peerConnectionParameters.dataChannelParameters.negotiated;
@@ -558,6 +557,15 @@ public class PeerConnectionClient {
       init.id = peerConnectionParameters.dataChannelParameters.id;
       init.protocol = peerConnectionParameters.dataChannelParameters.protocol;
       manageDataChannel = peerConnection.createDataChannel("Manage", init);
+
+      init = new DataChannel.Init();
+      init.ordered = peerConnectionParameters.dataChannelParameters.ordered;
+      init.negotiated = peerConnectionParameters.dataChannelParameters.negotiated;
+      init.maxRetransmits = peerConnectionParameters.dataChannelParameters.maxRetransmits;
+      init.maxRetransmitTimeMs = peerConnectionParameters.dataChannelParameters.maxRetransmitTimeMs;
+      init.id = peerConnectionParameters.dataChannelParameters.id;
+      init.protocol = peerConnectionParameters.dataChannelParameters.protocol;
+      messageDataChannel = peerConnection.createDataChannel("MessageProxy", init);
     }
     isInitiator = false;
 
@@ -1285,6 +1293,14 @@ public class PeerConnectionClient {
 
   public DataChannel getManageDataChannel(){
     return this.manageDataChannel;
+  }
+
+  public DataChannel getMessageDataChannel() throws IllegalStateException{
+      if(this.messageDataChannel==null){
+          throw new IllegalStateException("messageDataChannel==null");
+      } else {
+          return this.messageDataChannel;
+      }
   }
 
   public PeerConnection getPeerConnection() throws IllegalStateException{
