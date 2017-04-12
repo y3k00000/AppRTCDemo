@@ -67,7 +67,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
     private PeerConnectionParameters peerConnectionParameters;
     private final String roomId;
     private RoomStatus currentStatus;
-    private final CallBack callBack;
+    private CallBack callBack;
 
     public interface CallBack {
         void onRoomStatusChanged(Y3kAppRtcRoom room, RoomStatus currentStatus);
@@ -217,6 +217,12 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
         appRtcClient.connectToRoom(roomConnectionParameters);
         this.currentStatus = RoomStatus.CONNECTING;
         this.onRoomStatusChanged(RoomStatus.CONNECTING);
+    }
+
+    public Y3kAppRtcRoom setCallback(CallBack newCallback){
+        this.callBack = newCallback;
+        this.callBack.onRoomStatusChanged(this,currentStatus);
+        return this;
     }
 
     public String getRoomId() {
