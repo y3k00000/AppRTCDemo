@@ -297,13 +297,13 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
     public void onIceConnected() {
         Log.d(TAG, "onIceConnected()");
         this.onRoomStatusChanged(RoomStatus.ICE_CONNECTED);
-//        peerConnectionClient.enableStatsEvents(true, STAT_CALLBACK_PERIOD);
+        peerConnectionClient.enableStatsEvents(true, STAT_CALLBACK_PERIOD);
     }
 
     @Override
     public void onIceDisconnected() {
         Log.d(TAG, "onIceDisconnected()");
-        disconnect();
+        this.disconnect();
     }
 
     @Override
@@ -314,7 +314,9 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
     @Override
     public void onPeerConnectionStatsReady(final StatsReport[] reports) {
         Log.d(TAG, "onPeerConnectionStatsReady(" + Arrays.toString(reports) + ");");
-        this.onRoomStatusChanged(RoomStatus.PEER_CONNECTED);
+        if(this.getCurrentStatus()!=RoomStatus.PEER_CONNECTED) {
+            this.onRoomStatusChanged(RoomStatus.PEER_CONNECTED);
+        }
     }
 
     private final ArrayList<DataChannel> currentDataChannels = new ArrayList<>();
