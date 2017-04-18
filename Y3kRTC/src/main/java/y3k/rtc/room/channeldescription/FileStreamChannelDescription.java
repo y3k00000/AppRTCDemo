@@ -42,6 +42,10 @@ public class FileStreamChannelDescription extends DataChannelDescription {
                 .put(JSON_TAG_FILELENGTH, this.fileLength);
     }
 
+    public String getFilePath() {
+        return this.filePath;
+    }
+
     public String getFileName() {
         return this.fileName;
     }
