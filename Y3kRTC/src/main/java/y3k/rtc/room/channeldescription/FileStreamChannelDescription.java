@@ -13,13 +13,24 @@ public class FileStreamChannelDescription extends DataChannelDescription {
     private final static String JSON_TAG_FILEPATH = "stream_file_path";
     private final static String JSON_TAG_FILELENGTH = "stream_file_length";
 
-    private final String fileName,filePath;
+    private final String fileName, filePath;
     @Nullable
     private final InputStream fileStream;
     private final long fileLength;
+    @Nullable
+    private final SendProgressCallback progressCallback;
 
-    public FileStreamChannelDescription(UUID uuid, String fileName, String filePath, @Nullable InputStream fileStream, long fileLength) {
+    public interface SendProgressCallback {
+        void onStart();
+
+        void onSentBytes(long sentBytes);
+
+        void onFinished(Exception exception);
+    }
+
+    public FileStreamChannelDescription(UUID uuid, String fileName, String filePath, @Nullable InputStream fileStream, long fileLength, @Nullable SendProgressCallback progressCallback) {
         super(uuid);
+        this.progressCallback = progressCallback;
         this.fileStream = fileStream;
         this.fileName = fileName;
         this.filePath = filePath;
@@ -29,6 +40,7 @@ public class FileStreamChannelDescription extends DataChannelDescription {
     public FileStreamChannelDescription(JSONObject jsonObject) throws JSONException {
         super(jsonObject);
         this.fileStream = null;
+        this.progressCallback = null;
         this.fileName = jsonObject.getString(JSON_TAG_FILENAME);
         this.filePath = jsonObject.getString(JSON_TAG_FILEPATH);
         this.fileLength = jsonObject.getLong(JSON_TAG_FILELENGTH);
@@ -53,6 +65,11 @@ public class FileStreamChannelDescription extends DataChannelDescription {
     @Nullable
     public InputStream getFileStream() {
         return this.fileStream;
+    }
+
+    @Nullable
+    public SendProgressCallback getProgressCallback() {
+        return this.progressCallback;
     }
 
     public long getFileLength() {

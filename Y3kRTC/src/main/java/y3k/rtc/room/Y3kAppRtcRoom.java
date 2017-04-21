@@ -219,9 +219,9 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
         this.onRoomStatusChanged(RoomStatus.CONNECTING);
     }
 
-    public Y3kAppRtcRoom setCallback(CallBack newCallback){
+    public Y3kAppRtcRoom setCallback(CallBack newCallback) {
         this.callBack = newCallback;
-        this.callBack.onRoomStatusChanged(this,currentStatus);
+        this.callBack.onRoomStatusChanged(this, currentStatus);
         return this;
     }
 
@@ -250,7 +250,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
             peerConnectionClient.close();
             peerConnectionClient = null;
         }
-        if(this.currentDataChannels.size()!=0) {
+        if (this.currentDataChannels.size() != 0) {
             for (DataChannel channel : this.currentDataChannels) {
                 if (channel.state() != DataChannel.State.CLOSED && channel.state() != DataChannel.State.CLOSING) {
                     channel.close();
@@ -314,7 +314,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
     @Override
     public void onPeerConnectionStatsReady(final StatsReport[] reports) {
         Log.d(TAG, "onPeerConnectionStatsReady(" + Arrays.toString(reports) + ");");
-        if(this.getCurrentStatus()!=RoomStatus.PEER_CONNECTED) {
+        if (this.getCurrentStatus() != RoomStatus.PEER_CONNECTED) {
             this.onRoomStatusChanged(RoomStatus.PEER_CONNECTED);
         }
     }
@@ -551,7 +551,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                             if (localInputStream != null) {
                                 try {
                                     final DataChannel dataChannel = Y3kAppRtcRoom.this.newDataChannel(announcement.getChannelDescription().toJSONObject().toString());
-                                    new AsyncTask<Void, Integer, Void>() {
+                                    new AsyncTask<Void, Integer, Exception>() {
                                         long totalSentByteCount = 0;
 
                                         @Override
@@ -559,11 +559,19 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                                             super.onProgressUpdate(values);
                                             for (Integer progress : values) {
                                                 this.totalSentByteCount += progress;
+                                                FileStreamChannelDescription.SendProgressCallback sendProgressCallback = ((FileStreamChannelDescription) announcement.getChannelDescription()).getProgressCallback();
+                                                if (sendProgressCallback != null) {
+                                                    if (totalSentByteCount == 0) {
+                                                        sendProgressCallback.onStart();
+                                                    } else {
+                                                        sendProgressCallback.onSentBytes(progress);
+                                                    }
+                                                }
                                             }
                                         }
 
                                         @Override
-                                        protected Void doInBackground(Void... params) {
+                                        protected Exception doInBackground(Void... params) {
                                             while (dataChannel.state() != DataChannel.State.OPEN) {
                                                 try {
                                                     Thread.sleep(1000);
@@ -571,6 +579,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                                                     e.printStackTrace();
                                                 }
                                             }
+                                            this.publishProgress(0);
                                             byte[] readBuffer = new byte[51200];
                                             try {
                                                 for (int read; (read = localInputStream.read(readBuffer)) > 0; ) {
@@ -592,6 +601,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                                                 }
                                             } catch (IOException e) {
                                                 e.printStackTrace();
+                                                return e;
                                             }
                                             dataChannel.close();
                                             try {
@@ -600,6 +610,14 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                                                 e.printStackTrace();
                                             }
                                             return null;
+                                        }
+
+                                        @Override
+                                        protected void onPostExecute(Exception exception) {
+                                            FileStreamChannelDescription.SendProgressCallback sendProgressCallback = ((FileStreamChannelDescription) announcement.getChannelDescription()).getProgressCallback();
+                                            if (sendProgressCallback != null) {
+                                                sendProgressCallback.onFinished(exception);
+                                            }
                                         }
                                     }.execute();
                                 } catch (IllegalStateException | JSONException e) {
@@ -649,9 +667,9 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
         this.callBack.onRoomStatusChanged(this, this.currentStatus);
     }
 
-    public boolean openSendFileStreamAnnouncement(InputStream fileStream, String fileName, String filePath, long fileLength) {
+    public boolean openSendFileStreamAnnouncement(InputStream fileStream, String fileName, String filePath, long fileLength, FileStreamChannelDescription.SendProgressCallback progressCallback) {
         try {
-            DataChannelAnnouncement announcement = new DataChannelAnnouncement(this, new FileStreamChannelDescription(UUID.randomUUID(), fileName, filePath, fileStream, fileLength));
+            DataChannelAnnouncement announcement = new DataChannelAnnouncement(this, new FileStreamChannelDescription(UUID.randomUUID(), fileName, filePath, fileStream, fileLength, progressCallback));
             this.peerConnectionClient.getManageDataChannel().send(new DataChannel.Buffer(ByteBuffer.wrap(announcement.toJSONObject().toString().getBytes()), true));
             this.sentAnnouncements.add(announcement);
             return true;
@@ -673,9 +691,9 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
         }
     }
 
-    public boolean sendMessageThroughProxyChannel(String message){
+    public boolean sendMessageThroughProxyChannel(String message) {
         try {
-            this.peerConnectionClient.getMessageDataChannel().send(new DataChannel.Buffer(ByteBuffer.wrap(message.getBytes()),true));
+            this.peerConnectionClient.getMessageDataChannel().send(new DataChannel.Buffer(ByteBuffer.wrap(message.getBytes()), true));
             return true;
         } catch (IllegalStateException e) {
             e.printStackTrace();
