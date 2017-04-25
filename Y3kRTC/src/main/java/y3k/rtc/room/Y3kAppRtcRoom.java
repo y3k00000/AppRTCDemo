@@ -68,6 +68,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
     private final String roomId;
     private RoomStatus currentStatus;
     private CallBack callBack;
+    private final Context context;
 
     public interface CallBack {
         void onRoomStatusChanged(Y3kAppRtcRoom room, RoomStatus currentStatus);
@@ -86,6 +87,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
     public Y3kAppRtcRoom(Context context, String roomId, CallBack callBack) {
         this.callBack = callBack;
         this.roomId = roomId;
+        this.context = context;
 
         boolean loopback = false;
         boolean tracing = false;
@@ -217,6 +219,10 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
         appRtcClient.connectToRoom(roomConnectionParameters);
         this.currentStatus = RoomStatus.CONNECTING;
         this.onRoomStatusChanged(RoomStatus.CONNECTING);
+    }
+
+    public Context getContext() {
+        return this.context;
     }
 
     public Y3kAppRtcRoom setCallback(CallBack newCallback) {
@@ -616,7 +622,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                                         protected void onPostExecute(Exception exception) {
                                             FileStreamChannelDescription.SendProgressCallback sendProgressCallback = ((FileStreamChannelDescription) announcement.getChannelDescription()).getProgressCallback();
                                             if (sendProgressCallback != null) {
-                                                sendProgressCallback.onFinished(exception);
+                                                    sendProgressCallback.onFinished(exception);
                                             }
                                         }
                                     }.execute();

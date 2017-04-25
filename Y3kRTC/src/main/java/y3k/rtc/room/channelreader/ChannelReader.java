@@ -38,12 +38,12 @@ public abstract class ChannelReader<T> {
             Log.d(this.getClass().getSimpleName(), "onMessage(" + buffer.data.remaining() + ")");
             byte[] receivedBytes = new byte[buffer.data.remaining()];
             buffer.data.get(receivedBytes);
-            if(!ChannelReader.this.callback.onReadBytes(receivedBytes.length)){
-                if(ChannelReader.this.rtcDataChannel.state()!= DataChannel.State.CLOSED) {
+            if (!ChannelReader.this.callback.onReadBytes(receivedBytes.length)) {
+                if (ChannelReader.this.rtcDataChannel.state() != DataChannel.State.CLOSED && ChannelReader.this.rtcDataChannel.state() != DataChannel.State.CLOSING) {
                     ChannelReader.this.rtcDataChannel.unregisterObserver();
                     ChannelReader.this.rtcDataChannel.dispose();
                 }
-                ChannelReader.this.callback.onFinished(new CancellationException("Cancelled data channel reading!!"),null);
+                ChannelReader.this.callback.onFinished(new CancellationException("Cancelled data channel reading!!"), null);
                 return;
             }
             if (ChannelReader.this.targetOutputStream == null && (ChannelReader.this.targetOutputStream = ChannelReader.this.onCreateOutStream()) == null) {
