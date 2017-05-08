@@ -6,19 +6,51 @@
     android:orientation="vertical">
 
     <EditText
-        android:id="@+id/editText"
+        android:id="@+id/edittext_roomname"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:hint="ChannelName"
+        android:hint="Room Name"
         android:inputType="text"
         android:lines="1"
-        android:text="Y3kTest" />
+        android:visibility="visible"/>
 
     <Button
-        android:id="@+id/button1"
+        android:id="@+id/button_connect_room"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="OK"
-        android:layout_marginTop="8dp"/>
+        android:text="Connect"
+        android:layout_marginTop="8dp"
+        android:visibility="visible" />
 
+    <TextView
+        android:id="@+id/textview_roomname"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:lines="1"
+        android:visibility="gone"/>
+
+    <Button
+        android:id="@+id/button_send_file"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Send File"
+        android:layout_marginTop="8dp"
+        android:visibility="gone" />
+
+    <EditText
+        android:id="@+id/edittext_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="Message"
+        android:inputType="text"
+        android:lines="1"
+        android:visibility="gone"/>
+
+    <Button
+        android:id="@+id/button_send_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Send Message"
+        android:layout_marginTop="8dp"
+        android:visibility="gone" />
 </LinearLayout>

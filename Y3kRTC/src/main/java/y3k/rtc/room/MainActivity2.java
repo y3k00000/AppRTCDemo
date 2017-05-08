@@ -1,17 +1,27 @@
 package y3k.rtc.room;
 
+import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
+import android.widget.AdapterView;
+import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.webrtc.DataChannel;
@@ -36,7 +46,15 @@ public class MainActivity2 extends AppCompatActivity {
     Y3kAppRtcRoom.CallBack roomCallback = new Y3kAppRtcRoom.CallBack() {
         @Override
         public void onRoomStatusChanged(Y3kAppRtcRoom room, Y3kAppRtcRoom.RoomStatus currentStatus) {
-
+            if (currentStatus == Y3kAppRtcRoom.RoomStatus.DISCONNECTED) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity2.this, "Room DisConnected!!", Toast.LENGTH_SHORT).show();
+                        MainActivity2.this.finish();
+                    }
+                });
+            }
         }
 
         @Override
@@ -261,7 +279,7 @@ public class MainActivity2 extends AppCompatActivity {
 
         @Override
         public void onProxyMessage(final String message) {
-            Log.d(MainActivity2.class.getName(), "onProxyMessage("+message+")");
+            Log.d(MainActivity2.class.getName(), "onProxyMessage(" + message + ")");
             MainActivity2.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -271,67 +289,161 @@ public class MainActivity2 extends AppCompatActivity {
         }
     };
 
+    EditText editTextRoomName, editTextMessage;
+    Button buttonConnect, buttonSendMessage, buttonSendFile;
+    TextView textViewRoomName;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        (findViewById(R.id.button1)).setOnClickListener(new View.OnClickListener() {
+        this.editTextRoomName = (EditText) findViewById(R.id.edittext_roomname);
+        this.editTextMessage = (EditText) findViewById(R.id.edittext_message);
+        this.buttonConnect = (Button) findViewById(R.id.button_connect_room);
+        this.buttonSendMessage = (Button) findViewById(R.id.button_send_message);
+        this.buttonSendFile = (Button) findViewById(R.id.button_send_file);
+        this.textViewRoomName = (TextView) findViewById(R.id.textview_roomname);
+        this.buttonConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (MainActivity2.this.y3KAppRtcRoom == null) {
-                    y3KAppRtcRoom = new Y3kAppRtcRoom(MainActivity2.this, ((EditText) findViewById(R.id.editText)).getText().toString(), MainActivity2.this.roomCallback);
-                    findViewById(R.id.editText).setVisibility(View.INVISIBLE);
+                String roomName = MainActivity2.this.editTextRoomName.getText().toString();
+                if (roomName.length() < 8) {
+                    Toast.makeText(MainActivity2.this, "RoomName's length must be longer than 8.", Toast.LENGTH_SHORT).show();
                 } else {
-                    y3KAppRtcRoom.sendMessageThroughProxyChannel("BOOOOOO!!");
-//                    final File[] files = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).listFiles();
-//                    ListView listView = new ListView(MainActivity2.this);
-//                    listView.setAdapter(new BaseAdapter() {
-//                        @Override
-//                        public int getCount() {
-//                            return files.length;
-//                        }
-//
-//                        @Override
-//                        public Object getItem(int position) {
-//                            return files[position];
-//                        }
-//
-//                        @Override
-//                        public long getItemId(int position) {
-//                            return 0;
-//                        }
-//
-//                        @Override
-//                        public View getView(int position, View convertView, ViewGroup parent) {
-//                            TextView textView = new TextView(MainActivity2.this);
-//                            textView.setText(files[position].getName());
-//                            textView.setTag(files[position]);
-//                            return textView;
-//                        }
-//                    });
-//                    final AlertDialog alertDialog = new AlertDialog.Builder(MainActivity2.this)
-//                            .setView(listView)
-//                            .show();
-//                    listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//                        @Override
-//                        public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-//                            alertDialog.dismiss();
-//                            try {
-//                                MainActivity2.this.y3KAppRtcRoom.openSendFileStreamAnnouncement(new FileInputStream(files[position]),files[position].getName(),"///",files[position].length());
-//                            } catch (FileNotFoundException e) {
-//                                e.printStackTrace();
-//                            }
-////                            MainActivity2.this.y3KAppRtcRoom.openSendFileAnnouncement(files[position]);
-//                        }
-//                    });
+                    final ProgressDialog progressDialog = ProgressDialog.show(MainActivity2.this, "AppRTC", "Connecting to room \"" + roomName + "\"", true, true, new DialogInterface.OnCancelListener() {
+                        @Override
+                        public void onCancel(DialogInterface dialog) {
+                            MainActivity2.this.finish();
+                        }
+                    });
+                    MainActivity2.this.y3KAppRtcRoom = new Y3kAppRtcRoom(MainActivity2.this, roomName, new Y3kAppRtcRoom.CallBack() {
+                        @Override
+                        public void onRoomStatusChanged(final Y3kAppRtcRoom room, Y3kAppRtcRoom.RoomStatus currentStatus) {
+                            if (currentStatus == Y3kAppRtcRoom.RoomStatus.ROOM_CONNECTED) {
+                                y3KAppRtcRoom.setCallback(MainActivity2.this.roomCallback);
+                            }
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    progressDialog.dismiss();
+                                    MainActivity2.this.textViewRoomName.setVisibility(View.VISIBLE);
+                                    MainActivity2.this.textViewRoomName.setText("Room Name = [" + room.getRoomId() + "]");
+                                    MainActivity2.this.editTextRoomName.setVisibility(View.GONE);
+                                    MainActivity2.this.buttonConnect.setVisibility(View.GONE);
+                                    MainActivity2.this.editTextMessage.setVisibility(View.VISIBLE);
+                                    MainActivity2.this.buttonSendMessage.setVisibility(View.VISIBLE);
+                                    MainActivity2.this.buttonSendFile.setVisibility(View.VISIBLE);
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onDataChannelAnnouncement(DataChannelAnnouncement dataChannelAnnouncement) {
+
+                        }
+
+                        @Override
+                        public FileChannelReader onCreateFileChannelReader(DataChannel channel, FileChannelDescription channelDescription) {
+                            return null;
+                        }
+
+                        @Override
+                        public FileStreamChannelReader onCreateFileStreamChannelReader(DataChannel channel, FileStreamChannelDescription channelDescription) {
+                            return null;
+                        }
+
+                        @Override
+                        public ByteArrayChannelReader onCreateByteArrayChannelReader(DataChannel channel) {
+                            return null;
+                        }
+
+                        @Override
+                        public void onProxyMessage(String message) {
+
+                        }
+                    });
                 }
             }
         });
+        this.buttonSendFile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final File[] files = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).listFiles();
+                ListView listView = new ListView(MainActivity2.this);
+                listView.setAdapter(new BaseAdapter() {
+                    @Override
+                    public int getCount() {
+                        return files.length;
+                    }
+
+                    @Override
+                    public Object getItem(int position) {
+                        return files[position];
+                    }
+
+                    @Override
+                    public long getItemId(int position) {
+                        return 0;
+                    }
+
+                    @Override
+                    public View getView(int position, View convertView, ViewGroup parent) {
+                        TextView textView = new TextView(MainActivity2.this);
+                        textView.setText(files[position].getName());
+                        textView.setTag(files[position]);
+                        return textView;
+                    }
+                });
+                final AlertDialog alertDialog = new AlertDialog.Builder(MainActivity2.this)
+                        .setView(listView)
+                        .show();
+                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+                        alertDialog.dismiss();
+//                        try {
+//                            MainActivity2.this.y3KAppRtcRoom.openSendFileStreamAnnouncement(new FileInputStream(files[position]), files[position].getName(), "///", files[position].length());
+//                        } catch (FileNotFoundException e) {
+//                            e.printStackTrace();
+//                        }
+                        MainActivity2.this.y3KAppRtcRoom.openSendFileAnnouncement(files[position]);
+                    }
+                });
+            }
+        });
+        this.buttonSendMessage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (MainActivity2.this.editTextMessage.getText() != null && !MainActivity2.this.editTextMessage.getText().toString().equals("")) {
+                    MainActivity2.this.y3KAppRtcRoom.sendMessageThroughProxyChannel(MainActivity2.this.editTextMessage.getText().toString());
+                    MainActivity2.this.editTextMessage.getText().clear();
+                }
+            }
+        });
+        if (Build.VERSION.SDK_INT >= 23) {
+            this.requestPermissions(new String[]{
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+            }, 666);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        for (int grantResult : grantResults) {
+            if (grantResult == PackageManager.PERMISSION_DENIED) {
+                this.finish();
+                return;
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     @Override
     protected void onDestroy() {
-        y3KAppRtcRoom.onDestroy();
+        if (y3KAppRtcRoom != null) {
+            y3KAppRtcRoom.onDestroy();
+        }
         super.onDestroy();
     }
 }
