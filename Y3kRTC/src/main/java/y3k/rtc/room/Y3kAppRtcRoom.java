@@ -35,6 +35,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -515,7 +516,9 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                                             try {
                                                 for (int read; (read = fileInputStream.read(readBuffer)) > 0; ) {
                                                     Log.d("SendFile", "sent " + read);
-                                                    if (dataChannel.state() == DataChannel.State.CLOSED) {
+                                                    if (dataChannel.state() == DataChannel.State.CLOSING || dataChannel.state() == DataChannel.State.CLOSED) {
+                                                        Log.d("SendFile", "DataChannel Closed!!");
+                                                        return null;
                                                         // TODO
                                                     }
                                                     ByteBuffer byteBuffer = ByteBuffer.wrap(Arrays.copyOf(readBuffer, read));
@@ -565,8 +568,9 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                                                 if (sendProgressCallback != null) {
                                                     if (totalSentByteCount == 0) {
                                                         sendProgressCallback.onStart();
-                                                    } else {
-                                                        sendProgressCallback.onSentBytes(progress);
+                                                    } else if(!sendProgressCallback.onSentBytes(progress)){
+                                                            dataChannel.close();
+                                                            return;
                                                     }
                                                 }
                                             }
@@ -586,7 +590,9 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                                             try {
                                                 for (int read; (read = localInputStream.read(readBuffer)) > 0; ) {
                                                     Log.d("SendFile", "sent " + read);
-                                                    if (dataChannel.state() == DataChannel.State.CLOSED) {
+                                                    if (dataChannel.state() == DataChannel.State.CLOSING || dataChannel.state() == DataChannel.State.CLOSED) {
+                                                        Log.d("SendFile", "DataChannel Closed!!");
+                                                        return new InterruptedIOException("Channel Closed!!");
                                                         // TODO
                                                     }
                                                     ByteBuffer byteBuffer = ByteBuffer.wrap(Arrays.copyOf(readBuffer, read));
@@ -618,7 +624,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                                         protected void onPostExecute(Exception exception) {
                                             FileStreamChannelDescription.SendProgressCallback sendProgressCallback = ((FileStreamChannelDescription) announcement.getChannelDescription()).getProgressCallback();
                                             if (sendProgressCallback != null) {
-                                                    sendProgressCallback.onFinished(exception);
+                                                sendProgressCallback.onFinished(exception);
                                             }
                                         }
                                     }.execute();

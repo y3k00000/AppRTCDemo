@@ -23,7 +23,7 @@ public class FileStreamChannelDescription extends DataChannelDescription {
     public interface SendProgressCallback {
         void onStart();
 
-        void onSentBytes(long sentBytes);
+        boolean onSentBytes(long sentBytes);
 
         void onFinished(Exception exception);
     }
