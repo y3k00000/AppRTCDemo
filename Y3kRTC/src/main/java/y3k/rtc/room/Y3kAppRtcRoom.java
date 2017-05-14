@@ -49,10 +49,6 @@ import y3k.rtc.room.channelreader.ChannelReader;
 import y3k.rtc.room.channelreader.FileChannelReader;
 import y3k.rtc.room.channelreader.FileStreamChannelReader;
 
-/**
- * Activity for peer connection call setup, call waiting
- * and call view.
- */
 public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents {
 
     private static final String TAG = Y3kAppRtcRoom.class.getName() + ".LOG";
@@ -653,7 +649,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
     }
 
     public DataChannel newDataChannel(String name) throws IllegalStateException {
-        if (this.peerConnectionClient == null && this.currentStatus != RoomStatus.PEER_CONNECTED) {
+        if (this.peerConnectionClient == null || this.currentStatus != RoomStatus.PEER_CONNECTED) {
             throw new IllegalStateException("peerConnectionClient==null , you fool!!");
         } else {
             DataChannel.Init dataChannelInit = new DataChannel.Init();
@@ -674,36 +670,48 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
     }
 
     public boolean openSendFileStreamAnnouncement(InputStream fileStream, String fileName, String filePath, long fileLength, FileStreamChannelDescription.SendProgressCallback progressCallback) {
-        try {
-            DataChannelAnnouncement announcement = new DataChannelAnnouncement(this, new FileStreamChannelDescription(UUID.randomUUID(), fileName, filePath, fileStream, fileLength, progressCallback));
-            this.peerConnectionClient.getManageDataChannel().send(new DataChannel.Buffer(ByteBuffer.wrap(announcement.toJSONObject().toString().getBytes()), true));
-            this.sentAnnouncements.add(announcement);
-            return true;
-        } catch (IllegalArgumentException | JSONException e) {
-            e.printStackTrace();
+        if(this.peerConnectionClient==null){
             return false;
+        } else {
+            try {
+                DataChannelAnnouncement announcement = new DataChannelAnnouncement(this, new FileStreamChannelDescription(UUID.randomUUID(), fileName, filePath, fileStream, fileLength, progressCallback));
+                this.peerConnectionClient.getManageDataChannel().send(new DataChannel.Buffer(ByteBuffer.wrap(announcement.toJSONObject().toString().getBytes()), true));
+                this.sentAnnouncements.add(announcement);
+                return true;
+            } catch (IllegalArgumentException | JSONException e) {
+                e.printStackTrace();
+                return false;
+            }
         }
     }
 
     public boolean openSendFileAnnouncement(File file) {
-        try {
-            DataChannelAnnouncement announcement = new DataChannelAnnouncement(this, new FileChannelDescription(UUID.randomUUID(), file.getName(), file, file.length()));
-            this.peerConnectionClient.getManageDataChannel().send(new DataChannel.Buffer(ByteBuffer.wrap(announcement.toJSONObject().toString().getBytes()), true));
-            this.sentAnnouncements.add(announcement);
-            return true;
-        } catch (IllegalArgumentException | JSONException e) {
-            e.printStackTrace();
+        if(this.peerConnectionClient==null){
             return false;
+        } else {
+            try {
+                DataChannelAnnouncement announcement = new DataChannelAnnouncement(this, new FileChannelDescription(UUID.randomUUID(), file.getName(), file, file.length()));
+                this.peerConnectionClient.getManageDataChannel().send(new DataChannel.Buffer(ByteBuffer.wrap(announcement.toJSONObject().toString().getBytes()), true));
+                this.sentAnnouncements.add(announcement);
+                return true;
+            } catch (IllegalArgumentException | JSONException e) {
+                e.printStackTrace();
+                return false;
+            }
         }
     }
 
     public boolean sendMessageThroughProxyChannel(String message) {
-        try {
-            this.peerConnectionClient.getMessageDataChannel().send(new DataChannel.Buffer(ByteBuffer.wrap(message.getBytes()), true));
-            return true;
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
+        if(this.peerConnectionClient==null){
             return false;
+        } else {
+            try {
+                this.peerConnectionClient.getMessageDataChannel().send(new DataChannel.Buffer(ByteBuffer.wrap(message.getBytes()), true));
+                return true;
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+                return false;
+            }
         }
     }
 }
