@@ -21,6 +21,7 @@ import org.appspot.apprtc.PeerConnectionClient;
 import org.appspot.apprtc.PeerConnectionClient.DataChannelParameters;
 import org.appspot.apprtc.PeerConnectionClient.PeerConnectionParameters;
 import org.appspot.apprtc.WebSocketRTCClient;
+import org.appspot.apprtc.Y3kAppRtcRoomParams;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.webrtc.DataChannel;
@@ -90,11 +91,11 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
         boolean tracing = false;
 
         DataChannelParameters dataChannelParameters = new DataChannelParameters(
-                true, //EXTRA_ORDERED
-                -1, //EXTRA_MAX_RETRANSMITS_MS
-                -1, //EXTRA_MAX_RETRANSMITS
-                "", //EXTRA_PROTOCOL
-                false,//EXTRA_NEGOTIATED,
+                Y3kAppRtcRoomParams.isOrdered, //EXTRA_ORDERED
+                Y3kAppRtcRoomParams.maxRetransmitTimeMs, //EXTRA_MAX_RETRANSMITS_MS
+                Y3kAppRtcRoomParams.maxRetransmits, //EXTRA_MAX_RETRANSMITS
+                Y3kAppRtcRoomParams.protocol, //EXTRA_PROTOCOL
+                Y3kAppRtcRoomParams.isNegotiated,//EXTRA_NEGOTIATED,
                 -1);
 
         peerConnectionParameters =
