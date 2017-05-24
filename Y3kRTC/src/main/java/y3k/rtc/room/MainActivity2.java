@@ -49,16 +49,16 @@ public class MainActivity2 extends AppCompatActivity {
 
     Y3kAppRtcRoom.CallBack roomCallback = new Y3kAppRtcRoom.CallBack() {
         @Override
-        public void onRoomStatusChanged(Y3kAppRtcRoom room, Y3kAppRtcRoom.RoomStatus currentStatus) {
-            if (currentStatus == Y3kAppRtcRoom.RoomStatus.DISCONNECTED) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActivity2.this, "Room DisConnected!!", Toast.LENGTH_SHORT).show();
+        public void onRoomStatusChanged(Y3kAppRtcRoom room, final Y3kAppRtcRoom.RoomStatus currentStatus) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(MainActivity2.this, "Room New Status : "+currentStatus.name(), Toast.LENGTH_SHORT).show();
+                    if(currentStatus == Y3kAppRtcRoom.RoomStatus.DISCONNECTED){
                         MainActivity2.this.finish();
                     }
-                });
-            }
+                }
+            });
         }
 
         @Override
