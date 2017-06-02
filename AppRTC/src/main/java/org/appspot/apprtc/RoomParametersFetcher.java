@@ -140,8 +140,22 @@ public class RoomParametersFetcher {
       }
       // Request TURN servers.
       if (!isTurnPresent) {
-        LinkedList<PeerConnection.IceServer> turnServers =
-            requestTurnServers(roomJson.getString("ice_server_url"));
+        LinkedList<PeerConnection.IceServer> turnServers = new LinkedList<>();
+          turnServers.add(new PeerConnection.IceServer("stun:stun.l.google.com:19302"));
+          turnServers.add(new PeerConnection.IceServer("stun:stun1.l.google.com:19302"));
+          turnServers.add(new PeerConnection.IceServer("stun:stun2.l.google.com:19302"));
+          turnServers.add(new PeerConnection.IceServer("stun:stun3.l.google.com:19302"));
+          turnServers.add(new PeerConnection.IceServer("stun:stun4.l.google.com:19302"));
+          turnServers.add(new PeerConnection.IceServer("stun:stun.ekiga.net"));
+          turnServers.add(new PeerConnection.IceServer("stun:stun.ideasip.com"));
+          turnServers.add(new PeerConnection.IceServer("stun:stun.rixtelecom.se"));
+          turnServers.add(new PeerConnection.IceServer("stun:stun.schlund.de"));
+          turnServers.add(new PeerConnection.IceServer("stun:stun.stunprotocol.org:3478"));
+          turnServers.add(new PeerConnection.IceServer("stun:stun.voiparound.com"));
+          turnServers.add(new PeerConnection.IceServer("stun:stun.voipbuster.com"));
+          turnServers.add(new PeerConnection.IceServer("stun:stun.voipstunt.com"));
+          turnServers.add(new PeerConnection.IceServer("stun:stun.voxgratia.org"));
+//            requestTurnServers(roomJson.getString("ice_server_url"));
         for (PeerConnection.IceServer turnServer : turnServers) {
           Log.d(TAG, "TurnServer: " + turnServer);
           iceServers.add(turnServer);
@@ -153,8 +167,8 @@ public class RoomParametersFetcher {
       events.onSignalingParametersReady(params);
     } catch (JSONException e) {
       events.onSignalingParametersError("Room JSON parsing error: " + e.toString());
-    } catch (IOException e) {
-      events.onSignalingParametersError("Room IO error: " + e.toString());
+//    } catch (IOException e) {
+//      events.onSignalingParametersError("Room IO error: " + e.toString());
     }
   }
 
