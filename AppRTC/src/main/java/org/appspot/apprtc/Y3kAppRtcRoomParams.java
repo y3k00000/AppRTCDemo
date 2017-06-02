@@ -10,4 +10,6 @@ public class Y3kAppRtcRoomParams {
     public static int channelIdAppRtcData = -1;
     public static int channelIdManage = -1;
     public static int channelIdMessageProxy = -1;
+
+    public static boolean isIosRemote = false;
 }

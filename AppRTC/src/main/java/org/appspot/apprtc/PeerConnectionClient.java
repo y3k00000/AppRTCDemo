@@ -1310,4 +1310,12 @@ public class PeerConnectionClient {
       return this.peerConnection;
     }
   }
+
+  public void setManageDataChannel(DataChannel dataChannel){
+      this.manageDataChannel = dataChannel;
+  }
+
+  public void setMessageDataChannel(DataChannel dataChannel){
+      this.messageDataChannel = dataChannel;
+  }
 }

@@ -68,6 +68,8 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
     private CallBack callBack;
     private final Context context;
 
+    private final boolean isIosRemote;
+
     public interface CallBack {
         void onRoomStatusChanged(Y3kAppRtcRoom room, RoomStatus currentStatus);
 
@@ -82,10 +84,11 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
         void onProxyMessage(String message);
     }
 
-    public Y3kAppRtcRoom(Context context, String roomId, CallBack callBack) {
+    public Y3kAppRtcRoom(Context context, String roomId, boolean isIosRemote, CallBack callBack) {
         this.callBack = callBack;
         this.roomId = roomId;
         this.context = context;
+        this.isIosRemote = isIosRemote;
 
         boolean loopback = false;
         boolean tracing = false;
@@ -372,6 +375,9 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                     }
                 }
             });
+            if(this.isIosRemote) {
+                peerConnectionClient.setManageDataChannel(dataChannel);
+            }
         } else if (dataChannel.label().equals("MessageProxy")) {
             Log.d(Y3kAppRtcRoom.TAG, "got MessageProxy Channel!!");
             dataChannel.registerObserver(new DataChannel.Observer() {
@@ -394,6 +400,9 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                     Y3kAppRtcRoom.this.onProxyMessage(receivedString);
                 }
             });
+            if(this.isIosRemote) {
+                peerConnectionClient.setMessageDataChannel(dataChannel);
+            }
         } else {
             try {
                 Y3kAppRtcRoom.this.onFileChannelConnected(dataChannel, new FileChannelDescription(new JSONObject(dataChannel.label())));

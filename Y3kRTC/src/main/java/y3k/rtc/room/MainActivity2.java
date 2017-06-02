@@ -335,8 +335,11 @@ public class MainActivity2 extends AppCompatActivity {
                     final EditText channelIdMessageProxyEditText = new EditText(v.getContext());
                     channelIdMessageProxyEditText.setText(""+Y3kAppRtcRoomParams.channelIdMessageProxy);
                     channelIdMessageProxyEditText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_SIGNED);
+                    final CheckBox isIosRemoteCheckBox = new CheckBox(v.getContext());
+                    isIosRemoteCheckBox.setChecked(Y3kAppRtcRoomParams.isIosRemote);
 
                     View[] viewArray = {
+                            isIosRemoteCheckBox,
                             isOrderedCheckBox,
                             maxRetransmitTimeMsEditText,
                             maxRetransmitEditText,
@@ -354,6 +357,7 @@ public class MainActivity2 extends AppCompatActivity {
                     }
 
                     String [] viewIntroArray = {
+                            "isIosRemote = ",
                             "isOrdered = ",
                             "maxRetransmitTimeMs = ",
                             "maxRetransmits = ",
@@ -391,13 +395,14 @@ public class MainActivity2 extends AppCompatActivity {
                                     Y3kAppRtcRoomParams.channelIdAppRtcData = Integer.valueOf(channelIdAppRtcDataEditText.getText().toString());
                                     Y3kAppRtcRoomParams.channelIdManage = Integer.valueOf(channelIdManageEditText.getText().toString());
                                     Y3kAppRtcRoomParams.channelIdMessageProxy = Integer.valueOf(channelIdMessageProxyEditText.getText().toString());
+                                    Y3kAppRtcRoomParams.isIosRemote = isIosRemoteCheckBox.isChecked();
                                     final ProgressDialog progressDialog = ProgressDialog.show(MainActivity2.this, "AppRTC", "Connecting to room \"" + roomName + "\"", true, true, new DialogInterface.OnCancelListener() {
                                         @Override
                                         public void onCancel(DialogInterface dialog) {
                                             MainActivity2.this.finish();
                                         }
                                     });
-                                    MainActivity2.this.y3KAppRtcRoom = new Y3kAppRtcRoom(MainActivity2.this, roomName, new Y3kAppRtcRoom.CallBack() {
+                                    MainActivity2.this.y3KAppRtcRoom = new Y3kAppRtcRoom(MainActivity2.this, roomName, Y3kAppRtcRoomParams.isIosRemote, new Y3kAppRtcRoom.CallBack() {
                                         @Override
                                         public void onRoomStatusChanged(final Y3kAppRtcRoom room, Y3kAppRtcRoom.RoomStatus currentStatus) {
                                             if (currentStatus == Y3kAppRtcRoom.RoomStatus.ROOM_CONNECTED) {
