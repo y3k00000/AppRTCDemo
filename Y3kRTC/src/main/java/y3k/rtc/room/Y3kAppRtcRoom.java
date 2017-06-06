@@ -653,9 +653,9 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                     default:
                         break;
                 }
+                this.sentAnnouncements.remove(announcement);
+                break;
             }
-            this.sentAnnouncements.remove(announcement);
-            break;
         }
     }
 
