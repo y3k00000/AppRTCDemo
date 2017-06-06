@@ -375,7 +375,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                     }
                 }
             });
-            if(this.isIosRemote) {
+            if (this.isIosRemote) {
                 peerConnectionClient.setManageDataChannel(dataChannel);
             }
         } else if (dataChannel.label().equals("MessageProxy")) {
@@ -400,7 +400,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                     Y3kAppRtcRoom.this.onProxyMessage(receivedString);
                 }
             });
-            if(this.isIosRemote) {
+            if (this.isIosRemote) {
                 peerConnectionClient.setMessageDataChannel(dataChannel);
             }
         } else {
@@ -492,161 +492,19 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        for (final DataChannelAnnouncement announcement : new ArrayList<>(this.sentAnnouncements)) {
+        for (DataChannelAnnouncement announcement : new ArrayList<>(this.sentAnnouncements)) {
             if (announcement.getChannelDescription().getUUID().compareTo(acknowledgement.getChannelUUID()) == 0) {
                 switch (acknowledgement.getReply()) {
                     case NOTED:
-                        if (announcement.getChannelDescription() instanceof FileChannelDescription) {
-                            final File localFile = ((FileChannelDescription) announcement.getChannelDescription()).getLocalFile();
-                            if (localFile != null) {
-                                try {
-                                    final FileInputStream fileInputStream = new FileInputStream(localFile);
-                                    final DataChannel dataChannel = Y3kAppRtcRoom.this.newDataChannel(announcement.getChannelDescription().toJSONObject().toString());
-                                    new AsyncTask<Void, Integer, Void>() {
-                                        long totalSentByteCount = 0;
-
-                                        @Override
-                                        protected void onProgressUpdate(Integer... values) {
-                                            super.onProgressUpdate(values);
-                                            for (Integer progress : values) {
-                                                this.totalSentByteCount += progress;
-                                            }
-                                        }
-
-                                        @Override
-                                        protected Void doInBackground(Void... params) {
-                                            while (dataChannel.state() != DataChannel.State.OPEN) {
-                                                try {
-                                                    Thread.sleep(1000);
-                                                } catch (InterruptedException e) {
-                                                    e.printStackTrace();
-                                                }
-                                            }
-                                            byte[] readBuffer = new byte[51200];
-                                            try {
-                                                for (int read; (read = fileInputStream.read(readBuffer)) > 0; ) {
-                                                    Log.d("SendFile", "sent " + read);
-                                                    if (dataChannel.state() == DataChannel.State.CLOSING || dataChannel.state() == DataChannel.State.CLOSED) {
-                                                        Log.d("SendFile", "DataChannel Closed!!");
-                                                        return null;
-                                                        // TODO
-                                                    }
-                                                    ByteBuffer byteBuffer = ByteBuffer.wrap(Arrays.copyOf(readBuffer, read));
-                                                    dataChannel.send(new DataChannel.Buffer(byteBuffer, true));
-                                                    this.publishProgress(read);
-                                                    while (dataChannel.bufferedAmount() > 0) {
-                                                        Log.d("SendFile", "dataChannel.bufferedAmount = " + dataChannel.bufferedAmount());
-                                                        try {
-                                                            Thread.sleep(50);
-                                                        } catch (InterruptedException e) {
-                                                            e.printStackTrace();
-                                                        }
-                                                    }
-                                                }
-                                            } catch (IOException e) {
-                                                e.printStackTrace();
-                                            }
-                                            dataChannel.close();
-                                            try {
-                                                fileInputStream.close();
-                                            } catch (IOException e) {
-                                                e.printStackTrace();
-                                            }
-                                            return null;
-                                        }
-                                    }.execute();
-                                } catch (IllegalStateException | FileNotFoundException | JSONException e) {
-                                    e.printStackTrace();
-                                }
-                            } else {
-                                Log.d(TAG, "onChannelAcknowledgement localFile==null!!");
-                            }
-                        } else if (announcement.getChannelDescription() instanceof FileStreamChannelDescription) {
-                            final InputStream localInputStream = ((FileStreamChannelDescription) announcement.getChannelDescription()).getFileStream();
-                            if (localInputStream != null) {
-                                try {
-                                    final DataChannel dataChannel = Y3kAppRtcRoom.this.newDataChannel(announcement.getChannelDescription().toJSONObject().toString());
-                                    new AsyncTask<Void, Integer, Exception>() {
-                                        long totalSentByteCount = 0;
-
-                                        @Override
-                                        protected void onProgressUpdate(Integer... values) {
-                                            super.onProgressUpdate(values);
-                                            for (Integer progress : values) {
-                                                this.totalSentByteCount += progress;
-                                                FileStreamChannelDescription.SendProgressCallback sendProgressCallback = ((FileStreamChannelDescription) announcement.getChannelDescription()).getProgressCallback();
-                                                if (sendProgressCallback != null) {
-                                                    if (totalSentByteCount == 0) {
-                                                        sendProgressCallback.onStart();
-                                                    } else if(!sendProgressCallback.onSentBytes(progress)){
-                                                            dataChannel.close();
-                                                            return;
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        @Override
-                                        protected Exception doInBackground(Void... params) {
-                                            while (dataChannel.state() != DataChannel.State.OPEN) {
-                                                try {
-                                                    Thread.sleep(1000);
-                                                } catch (InterruptedException e) {
-                                                    e.printStackTrace();
-                                                }
-                                            }
-                                            this.publishProgress(0);
-                                            byte[] readBuffer = new byte[51200];
-                                            try {
-                                                for (int read; (read = localInputStream.read(readBuffer)) > 0; ) {
-                                                    Log.d("SendFile", "sent " + read);
-                                                    if (dataChannel.state() == DataChannel.State.CLOSING || dataChannel.state() == DataChannel.State.CLOSED) {
-                                                        Log.d("SendFile", "DataChannel Closed!!");
-                                                        return new InterruptedIOException("Channel Closed!!");
-                                                        // TODO
-                                                    }
-                                                    ByteBuffer byteBuffer = ByteBuffer.wrap(Arrays.copyOf(readBuffer, read));
-                                                    dataChannel.send(new DataChannel.Buffer(byteBuffer, true));
-                                                    this.publishProgress(read);
-                                                    while (dataChannel.bufferedAmount() > 0) {
-                                                        Log.d("SendFile", "dataChannel.bufferedAmount = " + dataChannel.bufferedAmount());
-                                                        try {
-                                                            Thread.sleep(50);
-                                                        } catch (InterruptedException e) {
-                                                            e.printStackTrace();
-                                                        }
-                                                    }
-                                                }
-                                            } catch (IOException e) {
-                                                e.printStackTrace();
-                                                return e;
-                                            }
-                                            dataChannel.close();
-                                            try {
-                                                localInputStream.close();
-                                            } catch (IOException e) {
-                                                e.printStackTrace();
-                                            }
-                                            return null;
-                                        }
-
-                                        @Override
-                                        protected void onPostExecute(Exception exception) {
-                                            FileStreamChannelDescription.SendProgressCallback sendProgressCallback = ((FileStreamChannelDescription) announcement.getChannelDescription()).getProgressCallback();
-                                            if (sendProgressCallback != null) {
-                                                sendProgressCallback.onFinished(exception);
-                                            }
-                                        }
-                                    }.execute();
-                                } catch (IllegalStateException | JSONException e) {
-                                    e.printStackTrace();
-                                }
-                            } else {
-                                Log.d(TAG, "onChannelAcknowledgement localInputStream==null!!");
-                            }
-                        } else {
-                            // TODO : else
+//                        if(this.isIosRemote){
+                        // TODO : isIosRemote
+//                        } else{
+                        try {
+                            serveNotedDataChannelAnnouncement(announcement, Y3kAppRtcRoom.this.newDataChannel(announcement.getChannelDescription().toJSONObject().toString()));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
+//                        }
                         break;
                     case REFUSE:
                         break;
@@ -656,6 +514,158 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                 this.sentAnnouncements.remove(announcement);
                 break;
             }
+        }
+    }
+
+    private void serveNotedDataChannelAnnouncement(final DataChannelAnnouncement announcement, final DataChannel dataChannel) {
+        if (announcement.getChannelDescription() instanceof FileChannelDescription) {
+            final File localFile = ((FileChannelDescription) announcement.getChannelDescription()).getLocalFile();
+            if (localFile != null) {
+                try {
+                    final FileInputStream fileInputStream = new FileInputStream(localFile);
+                    new AsyncTask<Void, Integer, Void>() {
+                        long totalSentByteCount = 0;
+
+                        @Override
+                        protected void onProgressUpdate(Integer... values) {
+                            super.onProgressUpdate(values);
+                            for (Integer progress : values) {
+                                this.totalSentByteCount += progress;
+                            }
+                        }
+
+                        @Override
+                        protected Void doInBackground(Void... params) {
+                            while (dataChannel.state() != DataChannel.State.OPEN) {
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            byte[] readBuffer = new byte[51200];
+                            try {
+                                for (int read; (read = fileInputStream.read(readBuffer)) > 0; ) {
+                                    Log.d("SendFile", "sent " + read);
+                                    if (dataChannel.state() == DataChannel.State.CLOSING || dataChannel.state() == DataChannel.State.CLOSED) {
+                                        Log.d("SendFile", "DataChannel Closed!!");
+                                        return null;
+                                        // TODO
+                                    }
+                                    ByteBuffer byteBuffer = ByteBuffer.wrap(Arrays.copyOf(readBuffer, read));
+                                    dataChannel.send(new DataChannel.Buffer(byteBuffer, true));
+                                    this.publishProgress(read);
+                                    while (dataChannel.bufferedAmount() > 0) {
+                                        Log.d("SendFile", "dataChannel.bufferedAmount = " + dataChannel.bufferedAmount());
+                                        try {
+                                            Thread.sleep(50);
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            dataChannel.close();
+                            try {
+                                fileInputStream.close();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            return null;
+                        }
+                    }.execute();
+                } catch (IllegalStateException | FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                Log.d(TAG, "onChannelAcknowledgement localFile==null!!");
+            }
+        } else if (announcement.getChannelDescription() instanceof FileStreamChannelDescription) {
+            final InputStream localInputStream = ((FileStreamChannelDescription) announcement.getChannelDescription()).getFileStream();
+            if (localInputStream != null) {
+                try {
+                    new AsyncTask<Void, Integer, Exception>() {
+                        long totalSentByteCount = 0;
+
+                        @Override
+                        protected void onProgressUpdate(Integer... values) {
+                            super.onProgressUpdate(values);
+                            for (Integer progress : values) {
+                                this.totalSentByteCount += progress;
+                                FileStreamChannelDescription.SendProgressCallback sendProgressCallback = ((FileStreamChannelDescription) announcement.getChannelDescription()).getProgressCallback();
+                                if (sendProgressCallback != null) {
+                                    if (totalSentByteCount == 0) {
+                                        sendProgressCallback.onStart();
+                                    } else if (!sendProgressCallback.onSentBytes(progress)) {
+                                        dataChannel.close();
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+
+                        @Override
+                        protected Exception doInBackground(Void... params) {
+                            while (dataChannel.state() != DataChannel.State.OPEN) {
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            this.publishProgress(0);
+                            byte[] readBuffer = new byte[51200];
+                            try {
+                                for (int read; (read = localInputStream.read(readBuffer)) > 0; ) {
+                                    Log.d("SendFile", "sent " + read);
+                                    if (dataChannel.state() == DataChannel.State.CLOSING || dataChannel.state() == DataChannel.State.CLOSED) {
+                                        Log.d("SendFile", "DataChannel Closed!!");
+                                        return new InterruptedIOException("Channel Closed!!");
+                                        // TODO
+                                    }
+                                    ByteBuffer byteBuffer = ByteBuffer.wrap(Arrays.copyOf(readBuffer, read));
+                                    dataChannel.send(new DataChannel.Buffer(byteBuffer, true));
+                                    this.publishProgress(read);
+                                    while (dataChannel.bufferedAmount() > 0) {
+                                        Log.d("SendFile", "dataChannel.bufferedAmount = " + dataChannel.bufferedAmount());
+                                        try {
+                                            Thread.sleep(50);
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                return e;
+                            }
+                            dataChannel.close();
+                            try {
+                                localInputStream.close();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            return null;
+                        }
+
+                        @Override
+                        protected void onPostExecute(Exception exception) {
+                            FileStreamChannelDescription.SendProgressCallback sendProgressCallback = ((FileStreamChannelDescription) announcement.getChannelDescription()).getProgressCallback();
+                            if (sendProgressCallback != null) {
+                                sendProgressCallback.onFinished(exception);
+                            }
+                        }
+                    }.execute();
+                } catch (IllegalStateException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                Log.d(TAG, "onChannelAcknowledgement localInputStream==null!!");
+            }
+        } else {
+            // TODO : else
         }
     }
 
@@ -686,7 +696,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
     }
 
     public boolean openSendFileStreamAnnouncement(InputStream fileStream, String fileName, String filePath, long fileLength, FileStreamChannelDescription.SendProgressCallback progressCallback) {
-        if(this.peerConnectionClient==null){
+        if (this.peerConnectionClient == null) {
             return false;
         } else {
             try {
@@ -702,7 +712,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
     }
 
     public boolean openSendFileAnnouncement(File file) {
-        if(this.peerConnectionClient==null){
+        if (this.peerConnectionClient == null) {
             return false;
         } else {
             try {
@@ -718,7 +728,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
     }
 
     public boolean sendMessageThroughProxyChannel(String message) {
-        if(this.peerConnectionClient==null){
+        if (this.peerConnectionClient == null) {
             return false;
         } else {
             try {
