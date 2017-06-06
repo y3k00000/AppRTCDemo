@@ -12,6 +12,7 @@ import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,11 +20,14 @@ import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.appspot.apprtc.Y3kAppRtcRoomParams;
 import org.webrtc.DataChannel;
 
 import java.io.File;
@@ -45,16 +49,16 @@ public class MainActivity2 extends AppCompatActivity {
 
     Y3kAppRtcRoom.CallBack roomCallback = new Y3kAppRtcRoom.CallBack() {
         @Override
-        public void onRoomStatusChanged(Y3kAppRtcRoom room, Y3kAppRtcRoom.RoomStatus currentStatus) {
-            if (currentStatus == Y3kAppRtcRoom.RoomStatus.DISCONNECTED) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActivity2.this, "Room DisConnected!!", Toast.LENGTH_SHORT).show();
+        public void onRoomStatusChanged(Y3kAppRtcRoom room, final Y3kAppRtcRoom.RoomStatus currentStatus) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(MainActivity2.this, "Room New Status : "+currentStatus.name(), Toast.LENGTH_SHORT).show();
+                    if(currentStatus == Y3kAppRtcRoom.RoomStatus.DISCONNECTED){
                         MainActivity2.this.finish();
                     }
-                });
-            }
+                }
+            });
         }
 
         @Override
@@ -306,62 +310,146 @@ public class MainActivity2 extends AppCompatActivity {
         this.buttonConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String roomName = MainActivity2.this.editTextRoomName.getText().toString();
+                final String roomName = MainActivity2.this.editTextRoomName.getText().toString();
                 if (roomName.length() < 8) {
                     Toast.makeText(MainActivity2.this, "RoomName's length must be longer than 8.", Toast.LENGTH_SHORT).show();
                 } else {
-                    final ProgressDialog progressDialog = ProgressDialog.show(MainActivity2.this, "AppRTC", "Connecting to room \"" + roomName + "\"", true, true, new DialogInterface.OnCancelListener() {
-                        @Override
-                        public void onCancel(DialogInterface dialog) {
-                            MainActivity2.this.finish();
+                    final CheckBox isOrderedCheckBox = new CheckBox(v.getContext());
+                    isOrderedCheckBox.setChecked(Y3kAppRtcRoomParams.isOrdered);
+                    final EditText maxRetransmitTimeMsEditText = new EditText(v.getContext());
+                    maxRetransmitTimeMsEditText.setText(""+Y3kAppRtcRoomParams.maxRetransmitTimeMs);
+                    maxRetransmitTimeMsEditText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_SIGNED);
+                    final EditText maxRetransmitEditText = new EditText(v.getContext());
+                    maxRetransmitEditText.setText(""+Y3kAppRtcRoomParams.maxRetransmits);
+                    maxRetransmitEditText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_SIGNED);
+                    final EditText protocolEditText = new EditText(v.getContext());
+                    protocolEditText.setText(Y3kAppRtcRoomParams.protocol);
+                    final CheckBox isNegotiatedCheckBox = new CheckBox(v.getContext());
+                    isNegotiatedCheckBox.setChecked(Y3kAppRtcRoomParams.isNegotiated);
+                    final EditText channelIdAppRtcDataEditText = new EditText(v.getContext());
+                    channelIdAppRtcDataEditText.setText(""+Y3kAppRtcRoomParams.channelIdAppRtcData);
+                    channelIdAppRtcDataEditText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_SIGNED);
+                    final EditText channelIdManageEditText = new EditText(v.getContext());
+                    channelIdManageEditText.setText(""+Y3kAppRtcRoomParams.channelIdManage);
+                    channelIdManageEditText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_SIGNED);
+                    final EditText channelIdMessageProxyEditText = new EditText(v.getContext());
+                    channelIdMessageProxyEditText.setText(""+Y3kAppRtcRoomParams.channelIdMessageProxy);
+                    channelIdMessageProxyEditText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_SIGNED);
+                    final CheckBox isIosRemoteCheckBox = new CheckBox(v.getContext());
+                    isIosRemoteCheckBox.setChecked(Y3kAppRtcRoomParams.isIosRemote);
+
+                    View[] viewArray = {
+                            isIosRemoteCheckBox,
+                            isOrderedCheckBox,
+                            maxRetransmitTimeMsEditText,
+                            maxRetransmitEditText,
+                            protocolEditText,
+                            isNegotiatedCheckBox,
+                            channelIdAppRtcDataEditText,
+                            channelIdManageEditText,
+                            channelIdMessageProxyEditText
+                    };
+
+                    for(View view : viewArray){
+                        if(view instanceof EditText){
+                            ((EditText) view).setSingleLine(true);
                         }
-                    });
-                    MainActivity2.this.y3KAppRtcRoom = new Y3kAppRtcRoom(MainActivity2.this, roomName, new Y3kAppRtcRoom.CallBack() {
-                        @Override
-                        public void onRoomStatusChanged(final Y3kAppRtcRoom room, Y3kAppRtcRoom.RoomStatus currentStatus) {
-                            if (currentStatus == Y3kAppRtcRoom.RoomStatus.ROOM_CONNECTED) {
-                                y3KAppRtcRoom.setCallback(MainActivity2.this.roomCallback);
-                            }
-                            runOnUiThread(new Runnable() {
+                    }
+
+                    String [] viewIntroArray = {
+                            "isIosRemote = ",
+                            "isOrdered = ",
+                            "maxRetransmitTimeMs = ",
+                            "maxRetransmits = ",
+                            "protocol = ",
+                            "isNegotiated = ",
+                            "\"ApprtcDemo data\" ID = ",
+                            "\"Manage\" ID = ",
+                            "\"MessageProxy\" ID = "
+                    };
+
+                    LinearLayout dialogLayout = new LinearLayout(v.getContext());
+                    dialogLayout.setOrientation(LinearLayout.VERTICAL);
+
+                    for(int i=0;i<viewIntroArray.length;i++){
+                        LinearLayout columnLayout = new LinearLayout(v.getContext());
+                        columnLayout.setOrientation(LinearLayout.HORIZONTAL);
+                        TextView viewIntroTextView = new TextView(v.getContext());
+                        viewIntroTextView.setText(viewIntroArray[i]);
+                        columnLayout.addView(viewIntroTextView);
+                        columnLayout.addView(viewArray[i]);
+                        dialogLayout.addView(columnLayout);
+                    }
+
+                    new AlertDialog.Builder(v.getContext())
+                            .setTitle("Connect Params")
+                            .setView(dialogLayout)
+                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                                 @Override
-                                public void run() {
-                                    progressDialog.dismiss();
-                                    MainActivity2.this.textViewRoomName.setVisibility(View.VISIBLE);
-                                    MainActivity2.this.textViewRoomName.setText("Room Name = [" + room.getRoomId() + "]");
-                                    MainActivity2.this.editTextRoomName.setVisibility(View.GONE);
-                                    MainActivity2.this.buttonConnect.setVisibility(View.GONE);
-                                    MainActivity2.this.editTextMessage.setVisibility(View.VISIBLE);
-                                    MainActivity2.this.buttonSendMessage.setVisibility(View.VISIBLE);
-                                    MainActivity2.this.buttonSendFile.setVisibility(View.VISIBLE);
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Y3kAppRtcRoomParams.isOrdered = isOrderedCheckBox.isChecked();
+                                    Y3kAppRtcRoomParams.maxRetransmitTimeMs = Integer.valueOf(maxRetransmitTimeMsEditText.getText().toString());
+                                    Y3kAppRtcRoomParams.maxRetransmits = Integer.valueOf(maxRetransmitEditText.getText().toString());
+                                    Y3kAppRtcRoomParams.isNegotiated = isNegotiatedCheckBox.isChecked();
+                                    Y3kAppRtcRoomParams.protocol = protocolEditText.getText().toString();
+                                    Y3kAppRtcRoomParams.channelIdAppRtcData = Integer.valueOf(channelIdAppRtcDataEditText.getText().toString());
+                                    Y3kAppRtcRoomParams.channelIdManage = Integer.valueOf(channelIdManageEditText.getText().toString());
+                                    Y3kAppRtcRoomParams.channelIdMessageProxy = Integer.valueOf(channelIdMessageProxyEditText.getText().toString());
+                                    Y3kAppRtcRoomParams.isIosRemote = isIosRemoteCheckBox.isChecked();
+                                    final ProgressDialog progressDialog = ProgressDialog.show(MainActivity2.this, "AppRTC", "Connecting to room \"" + roomName + "\"", true, true, new DialogInterface.OnCancelListener() {
+                                        @Override
+                                        public void onCancel(DialogInterface dialog) {
+                                            MainActivity2.this.finish();
+                                        }
+                                    });
+                                    MainActivity2.this.y3KAppRtcRoom = new Y3kAppRtcRoom(MainActivity2.this, roomName, Y3kAppRtcRoomParams.isIosRemote, new Y3kAppRtcRoom.CallBack() {
+                                        @Override
+                                        public void onRoomStatusChanged(final Y3kAppRtcRoom room, Y3kAppRtcRoom.RoomStatus currentStatus) {
+                                            if (currentStatus == Y3kAppRtcRoom.RoomStatus.ROOM_CONNECTED) {
+                                                y3KAppRtcRoom.setCallback(MainActivity2.this.roomCallback);
+                                            }
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    progressDialog.dismiss();
+                                                    MainActivity2.this.textViewRoomName.setVisibility(View.VISIBLE);
+                                                    MainActivity2.this.textViewRoomName.setText("Room Name = [" + room.getRoomId() + "]");
+                                                    MainActivity2.this.editTextRoomName.setVisibility(View.GONE);
+                                                    MainActivity2.this.buttonConnect.setVisibility(View.GONE);
+                                                    MainActivity2.this.editTextMessage.setVisibility(View.VISIBLE);
+                                                    MainActivity2.this.buttonSendMessage.setVisibility(View.VISIBLE);
+                                                    MainActivity2.this.buttonSendFile.setVisibility(View.VISIBLE);
+                                                }
+                                            });
+                                        }
+
+                                        @Override
+                                        public void onDataChannelAnnouncement(DataChannelAnnouncement dataChannelAnnouncement) {
+
+                                        }
+
+                                        @Override
+                                        public FileChannelReader onCreateFileChannelReader(DataChannel channel, FileChannelDescription channelDescription) {
+                                            return null;
+                                        }
+
+                                        @Override
+                                        public FileStreamChannelReader onCreateFileStreamChannelReader(DataChannel channel, FileStreamChannelDescription channelDescription) {
+                                            return null;
+                                        }
+
+                                        @Override
+                                        public ByteArrayChannelReader onCreateByteArrayChannelReader(DataChannel channel) {
+                                            return null;
+                                        }
+
+                                        @Override
+                                        public void onProxyMessage(String message) {
+
+                                        }
+                                    });
                                 }
-                            });
-                        }
-
-                        @Override
-                        public void onDataChannelAnnouncement(DataChannelAnnouncement dataChannelAnnouncement) {
-
-                        }
-
-                        @Override
-                        public FileChannelReader onCreateFileChannelReader(DataChannel channel, FileChannelDescription channelDescription) {
-                            return null;
-                        }
-
-                        @Override
-                        public FileStreamChannelReader onCreateFileStreamChannelReader(DataChannel channel, FileStreamChannelDescription channelDescription) {
-                            return null;
-                        }
-
-                        @Override
-                        public ByteArrayChannelReader onCreateByteArrayChannelReader(DataChannel channel) {
-                            return null;
-                        }
-
-                        @Override
-                        public void onProxyMessage(String message) {
-
-                        }
-                    });
+                            }).show();
                 }
             }
         });

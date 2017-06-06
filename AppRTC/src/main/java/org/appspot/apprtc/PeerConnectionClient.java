@@ -545,7 +545,7 @@ public class PeerConnectionClient {
       init.negotiated = peerConnectionParameters.dataChannelParameters.negotiated;
       init.maxRetransmits = peerConnectionParameters.dataChannelParameters.maxRetransmits;
       init.maxRetransmitTimeMs = peerConnectionParameters.dataChannelParameters.maxRetransmitTimeMs;
-      init.id = peerConnectionParameters.dataChannelParameters.id;
+      init.id = Y3kAppRtcRoomParams.channelIdAppRtcData;
       init.protocol = peerConnectionParameters.dataChannelParameters.protocol;
       dataChannel = peerConnection.createDataChannel("ApprtcDemo data", init);
 
@@ -554,7 +554,7 @@ public class PeerConnectionClient {
       init.negotiated = peerConnectionParameters.dataChannelParameters.negotiated;
       init.maxRetransmits = peerConnectionParameters.dataChannelParameters.maxRetransmits;
       init.maxRetransmitTimeMs = peerConnectionParameters.dataChannelParameters.maxRetransmitTimeMs;
-      init.id = peerConnectionParameters.dataChannelParameters.id;
+      init.id = Y3kAppRtcRoomParams.channelIdManage;
       init.protocol = peerConnectionParameters.dataChannelParameters.protocol;
       manageDataChannel = peerConnection.createDataChannel("Manage", init);
 
@@ -563,7 +563,7 @@ public class PeerConnectionClient {
       init.negotiated = peerConnectionParameters.dataChannelParameters.negotiated;
       init.maxRetransmits = peerConnectionParameters.dataChannelParameters.maxRetransmits;
       init.maxRetransmitTimeMs = peerConnectionParameters.dataChannelParameters.maxRetransmitTimeMs;
-      init.id = peerConnectionParameters.dataChannelParameters.id;
+      init.id = Y3kAppRtcRoomParams.channelIdMessageProxy;
       init.protocol = peerConnectionParameters.dataChannelParameters.protocol;
       messageDataChannel = peerConnection.createDataChannel("MessageProxy", init);
     }
@@ -1309,5 +1309,13 @@ public class PeerConnectionClient {
     } else{
       return this.peerConnection;
     }
+  }
+
+  public void setManageDataChannel(DataChannel dataChannel){
+      this.manageDataChannel = dataChannel;
+  }
+
+  public void setMessageDataChannel(DataChannel dataChannel){
+      this.messageDataChannel = dataChannel;
   }
 }
