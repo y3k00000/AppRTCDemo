@@ -24,6 +24,9 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RadioButton;
+import android.widget.SimpleAdapter;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,6 +37,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashMap;
 
 import y3k.rtc.room.announcement.DataChannelAnnouncement;
 import y3k.rtc.room.channeldescription.FileChannelDescription;
@@ -337,6 +341,33 @@ public class MainActivity2 extends AppCompatActivity {
                     channelIdMessageProxyEditText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_SIGNED);
                     final CheckBox isIosRemoteCheckBox = new CheckBox(v.getContext());
                     isIosRemoteCheckBox.setChecked(Y3kAppRtcRoomParams.isIosRemote);
+                    final Spinner serverSelectSpinner = new Spinner(v.getContext());
+                    BaseAdapter serverSelectAdapter = new BaseAdapter() {
+                        @Override
+                        public int getCount() {
+                            return Y3kAppRtcRoomParams.AppRTCServer.values().length;
+                        }
+
+                        @Override
+                        public Object getItem(int position) {
+                            return Y3kAppRtcRoomParams.AppRTCServer.values()[position];
+                        }
+
+                        @Override
+                        public long getItemId(int position) {
+                            return 0;
+                        }
+
+                        @Override
+                        public View getView(int position, View convertView, ViewGroup parent) {
+                            TextView textView = new TextView(MainActivity2.this);
+                            textView.setText(Y3kAppRtcRoomParams.AppRTCServer.values()[position].displayName);
+                            return textView;
+                        }
+                    };
+                    serverSelectSpinner.setAdapter(serverSelectAdapter);
+                    serverSelectAdapter.notifyDataSetChanged();
+                    serverSelectSpinner.setSelection(Y3kAppRtcRoomParams.appRTCServer.ordinal());
 
                     View[] viewArray = {
                             isIosRemoteCheckBox,
@@ -347,7 +378,8 @@ public class MainActivity2 extends AppCompatActivity {
                             isNegotiatedCheckBox,
                             channelIdAppRtcDataEditText,
                             channelIdManageEditText,
-                            channelIdMessageProxyEditText
+                            channelIdMessageProxyEditText,
+                            serverSelectSpinner
                     };
 
                     for(View view : viewArray){
@@ -365,7 +397,8 @@ public class MainActivity2 extends AppCompatActivity {
                             "isNegotiated = ",
                             "\"ApprtcDemo data\" ID = ",
                             "\"Manage\" ID = ",
-                            "\"MessageProxy\" ID = "
+                            "\"MessageProxy\" ID = ",
+                            "Server = "
                     };
 
                     LinearLayout dialogLayout = new LinearLayout(v.getContext());
@@ -396,6 +429,7 @@ public class MainActivity2 extends AppCompatActivity {
                                     Y3kAppRtcRoomParams.channelIdManage = Integer.valueOf(channelIdManageEditText.getText().toString());
                                     Y3kAppRtcRoomParams.channelIdMessageProxy = Integer.valueOf(channelIdMessageProxyEditText.getText().toString());
                                     Y3kAppRtcRoomParams.isIosRemote = isIosRemoteCheckBox.isChecked();
+                                    Y3kAppRtcRoomParams.appRTCServer = (Y3kAppRtcRoomParams.AppRTCServer)serverSelectSpinner.getSelectedItem();
                                     final ProgressDialog progressDialog = ProgressDialog.show(MainActivity2.this, "AppRTC", "Connecting to room \"" + roomName + "\"", true, true, new DialogInterface.OnCancelListener() {
                                         @Override
                                         public void onCancel(DialogInterface dialog) {

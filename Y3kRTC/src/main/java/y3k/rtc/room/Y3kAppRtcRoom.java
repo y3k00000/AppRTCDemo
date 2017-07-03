@@ -207,7 +207,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
 //      appRtcClient = new DirectRTCClient(this);
 //    }
         // Create connection parameters.
-        RoomConnectionParameters roomConnectionParameters = new RoomConnectionParameters("https://appr.tc", roomId, false);
+        RoomConnectionParameters roomConnectionParameters = new RoomConnectionParameters(Y3kAppRtcRoomParams.appRTCServer.address, roomId, false);
 
         if (loopback) {
             PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();

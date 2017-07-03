@@ -141,6 +141,7 @@ public class RoomParametersFetcher {
       // Request TURN servers.
       if (!isTurnPresent) {
         LinkedList<PeerConnection.IceServer> turnServers = new LinkedList<>();
+        if(Y3kAppRtcRoomParams.appRTCServer.useCustomStunStevers){
           turnServers.add(new PeerConnection.IceServer("stun:stun.l.google.com:19302"));
           turnServers.add(new PeerConnection.IceServer("stun:stun1.l.google.com:19302"));
           turnServers.add(new PeerConnection.IceServer("stun:stun2.l.google.com:19302"));
@@ -155,7 +156,9 @@ public class RoomParametersFetcher {
           turnServers.add(new PeerConnection.IceServer("stun:stun.voipbuster.com"));
           turnServers.add(new PeerConnection.IceServer("stun:stun.voipstunt.com"));
           turnServers.add(new PeerConnection.IceServer("stun:stun.voxgratia.org"));
-//            requestTurnServers(roomJson.getString("ice_server_url"));
+        } else {
+            turnServers.addAll(requestTurnServers(roomJson.getString("ice_server_url")));
+        }
         for (PeerConnection.IceServer turnServer : turnServers) {
           Log.d(TAG, "TurnServer: " + turnServer);
           iceServers.add(turnServer);
@@ -167,8 +170,8 @@ public class RoomParametersFetcher {
       events.onSignalingParametersReady(params);
     } catch (JSONException e) {
       events.onSignalingParametersError("Room JSON parsing error: " + e.toString());
-//    } catch (IOException e) {
-//      events.onSignalingParametersError("Room IO error: " + e.toString());
+    } catch (IOException e) {
+      events.onSignalingParametersError("Room IO error: " + e.toString());
     }
   }
 
