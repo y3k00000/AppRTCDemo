@@ -141,7 +141,7 @@ public class RoomParametersFetcher {
       // Request TURN servers.
       if (!isTurnPresent) {
         LinkedList<PeerConnection.IceServer> turnServers = new LinkedList<>();
-        if(Y3kAppRtcRoomParams.appRTCServer.useCustomStunStevers){
+        if(Y3kAppRtcRoomParams.appRTCServer.useCustomStunServers){
           turnServers.add(new PeerConnection.IceServer("stun:stun.l.google.com:19302"));
           turnServers.add(new PeerConnection.IceServer("stun:stun1.l.google.com:19302"));
           turnServers.add(new PeerConnection.IceServer("stun:stun2.l.google.com:19302"));

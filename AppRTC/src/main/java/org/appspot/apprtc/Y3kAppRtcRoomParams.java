@@ -18,12 +18,12 @@ public class Y3kAppRtcRoomParams {
         ASKEY("Askey Cloud Team", "https://webrtc-apcs.askeycloudapi.com", false), APPRTC("Appr.tc", "https://appr.tc", true);
         public final String displayName;
         public final String address;
-        public final boolean useCustomStunStevers;
+        public final boolean useCustomStunServers;
 
-        AppRTCServer(String displayName, String address, boolean useCustomStunStevers) {
+        AppRTCServer(String displayName, String address, boolean useCustomStunServers) {
             this.displayName = displayName;
             this.address = address;
-            this.useCustomStunStevers = useCustomStunStevers;
+            this.useCustomStunServers = useCustomStunServers;
         }
     }
 }
