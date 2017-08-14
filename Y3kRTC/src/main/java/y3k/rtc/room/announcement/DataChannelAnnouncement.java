@@ -5,7 +5,6 @@ import org.json.JSONObject;
 
 import java.util.Date;
 
-import y3k.rtc.room.Y3kAppRtcRoom;
 import y3k.rtc.room.channeldescription.DataChannelDescription;
 import y3k.rtc.room.channeldescription.FileChannelDescription;
 import y3k.rtc.room.channeldescription.FileStreamChannelDescription;
@@ -17,10 +16,15 @@ public class DataChannelAnnouncement {
     private final DataChannelDescription channelDescription;
     private final AnnouncementType type;
     private final double timeStamp;
-    private final Y3kAppRtcRoom room;
+    private final Callback callback;
 
-    public DataChannelAnnouncement(Y3kAppRtcRoom room, DataChannelDescription channelDescription) throws IllegalArgumentException {
-        this.room = room;
+    public interface Callback{
+        void onAnnouncementAccepted(DataChannelAnnouncement announcement);
+        void onAnnouncementDeclined(DataChannelAnnouncement announcement);
+    }
+
+    public DataChannelAnnouncement(Callback callback, DataChannelDescription channelDescription) throws IllegalArgumentException {
+        this.callback = callback;
         this.channelDescription = channelDescription;
         if (this.channelDescription instanceof FileChannelDescription) {
             this.type = AnnouncementType.File;
@@ -32,8 +36,8 @@ public class DataChannelAnnouncement {
         this.timeStamp = new Date().getTime();
     }
 
-    public DataChannelAnnouncement(Y3kAppRtcRoom room,JSONObject jsonObject) throws JSONException, IllegalArgumentException {
-        this.room = room;
+    public DataChannelAnnouncement(Callback callback,JSONObject jsonObject) throws JSONException, IllegalArgumentException {
+        this.callback = callback;
         this.type = AnnouncementType.valueOf(jsonObject.getString(JSON_TAG_ANNOUNCEMENT_TYPE));
         this.timeStamp = jsonObject.getLong(JSON_TAG_ANNOUNCEMENT_TIMESTAMP);
         switch (this.type) {
@@ -72,10 +76,10 @@ public class DataChannelAnnouncement {
     }
 
     public final void accept(){
-        this.room.onAnnouncementAccepted(this);
+        this.callback.onAnnouncementAccepted(this);
     }
 
     public final void decline(){
-        this.room.onAnnouncementDeclined(this);
+        this.callback.onAnnouncementDeclined(this);
     }
 }

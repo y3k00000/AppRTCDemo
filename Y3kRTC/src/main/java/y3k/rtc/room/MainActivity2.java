@@ -28,7 +28,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.appspot.apprtc.CallActivity2;
 import org.appspot.apprtc.Y3kAppRtcRoomParams;
 import org.webrtc.DataChannel;
 

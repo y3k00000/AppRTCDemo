@@ -51,7 +51,7 @@ import y3k.rtc.room.channelreader.ChannelReader;
 import y3k.rtc.room.channelreader.FileChannelReader;
 import y3k.rtc.room.channelreader.FileStreamChannelReader;
 
-public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents {
+public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents, DataChannelAnnouncement.Callback{
 
     private static final String TAG = Y3kAppRtcRoom.class.getName() + ".LOG";
 

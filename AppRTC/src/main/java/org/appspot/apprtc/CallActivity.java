@@ -29,6 +29,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
 import android.widget.Toast;
+
+import java.io.File;
 import java.io.IOException;
 import java.lang.RuntimeException;
 import java.util.ArrayList;
@@ -480,7 +482,17 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     return micEnabled;
   }
 
-  // Helper functions.
+    @Override
+    public void onFileSend(File file) {
+
+    }
+
+    @Override
+    public void onMessageSend(String message) {
+
+    }
+
+    // Helper functions.
   private void toggleCallControlFragmentVisibility() {
     if (!iceConnected || !callFragment.isAdded()) {
       return;
