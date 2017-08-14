@@ -576,13 +576,13 @@ public class PeerConnectionClient {
     Logging.enableTracing("logcat:", EnumSet.of(Logging.TraceLevel.TRACE_DEFAULT));
     Logging.enableLogToDebugOutput(Logging.Severity.LS_INFO);
 
-//    mediaStream = factory.createLocalMediaStream("ARDAMS");
-//    if (videoCallEnabled) {
-//      mediaStream.addTrack(createVideoTrack(videoCapturer));
-//    }
+    mediaStream = factory.createLocalMediaStream("ARDAMS");
+    if (videoCallEnabled) {
+      mediaStream.addTrack(createVideoTrack(videoCapturer));
+    }
 
-//    mediaStream.addTrack(createAudioTrack());
-//    peerConnection.addStream(mediaStream);
+    mediaStream.addTrack(createAudioTrack());
+    peerConnection.addStream(mediaStream);
     if (videoCallEnabled) {
       findVideoSender();
     }

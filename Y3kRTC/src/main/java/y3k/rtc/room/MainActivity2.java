@@ -28,6 +28,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.appspot.apprtc.CallActivity2;
 import org.appspot.apprtc.Y3kAppRtcRoomParams;
 import org.webrtc.DataChannel;
 
@@ -429,58 +430,9 @@ public class MainActivity2 extends AppCompatActivity {
                                     y3kAppRtcRoomParams.channelIdMessageProxy = Integer.valueOf(channelIdMessageProxyEditText.getText().toString());
                                     y3kAppRtcRoomParams.isIosRemote = isIosRemoteCheckBox.isChecked();
                                     y3kAppRtcRoomParams.appRTCServer = (Y3kAppRtcRoomParams.AppRTCServer) serverSelectSpinner.getSelectedItem();
-                                    final ProgressDialog progressDialog = ProgressDialog.show(MainActivity2.this, "AppRTC", "Connecting to room \"" + roomName + "\"", true, true, new DialogInterface.OnCancelListener() {
-                                        @Override
-                                        public void onCancel(DialogInterface dialog) {
-                                            MainActivity2.this.finish();
-                                        }
-                                    });
-                                    MainActivity2.this.y3KAppRtcRoom = new Y3kAppRtcRoom(MainActivity2.this, roomName, y3kAppRtcRoomParams, new Y3kAppRtcRoom.CallBack() {
-                                        @Override
-                                        public void onRoomStatusChanged(final Y3kAppRtcRoom room, Y3kAppRtcRoom.RoomStatus currentStatus) {
-                                            if (currentStatus == Y3kAppRtcRoom.RoomStatus.ROOM_CONNECTED) {
-                                                y3KAppRtcRoom.setCallback(MainActivity2.this.roomCallback);
-                                            }
-                                            runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    progressDialog.dismiss();
-                                                    MainActivity2.this.textViewRoomName.setVisibility(View.VISIBLE);
-                                                    MainActivity2.this.textViewRoomName.setText("Room Name = [" + room.getRoomId() + "]");
-                                                    MainActivity2.this.editTextRoomName.setVisibility(View.GONE);
-                                                    MainActivity2.this.buttonConnect.setVisibility(View.GONE);
-                                                    MainActivity2.this.editTextMessage.setVisibility(View.VISIBLE);
-                                                    MainActivity2.this.buttonSendMessage.setVisibility(View.VISIBLE);
-                                                    MainActivity2.this.buttonSendFile.setVisibility(View.VISIBLE);
-                                                }
-                                            });
-                                        }
-
-                                        @Override
-                                        public void onDataChannelAnnouncement(DataChannelAnnouncement dataChannelAnnouncement) {
-
-                                        }
-
-                                        @Override
-                                        public FileChannelReader onCreateFileChannelReader(DataChannel channel, FileChannelDescription channelDescription) {
-                                            return null;
-                                        }
-
-                                        @Override
-                                        public FileStreamChannelReader onCreateFileStreamChannelReader(DataChannel channel, FileStreamChannelDescription channelDescription) {
-                                            return null;
-                                        }
-
-                                        @Override
-                                        public ByteArrayChannelReader onCreateByteArrayChannelReader(DataChannel channel) {
-                                            return null;
-                                        }
-
-                                        @Override
-                                        public void onProxyMessage(String message) {
-
-                                        }
-                                    });
+//                                    MainActivity2.this.connectUsingY3kRtcRoom(roomName);
+                                    MainActivity2.this.startActivity(new Intent(MainActivity2.this, CallActivity2.class).putExtra(CallActivity2.INTENT_EXTRA_ROOMID,roomName).putExtra(CallActivity2.INTENT_EXTRA_Y3K_PARAMS,y3kAppRtcRoomParams));
+                                    MainActivity2.this.finish();
                                 }
                             }).show();
                 }
@@ -547,6 +499,61 @@ public class MainActivity2 extends AppCompatActivity {
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
             }, 666);
         }
+    }
+
+    void connectUsingY3kRtcRoom(String roomName) {
+        final ProgressDialog progressDialog = ProgressDialog.show(MainActivity2.this, "AppRTC", "Connecting to room \"" + roomName + "\"", true, true, new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                MainActivity2.this.finish();
+            }
+        });
+        MainActivity2.this.y3KAppRtcRoom = new Y3kAppRtcRoom(MainActivity2.this, roomName, y3kAppRtcRoomParams, new Y3kAppRtcRoom.CallBack() {
+            @Override
+            public void onRoomStatusChanged(final Y3kAppRtcRoom room, Y3kAppRtcRoom.RoomStatus currentStatus) {
+                if (currentStatus == Y3kAppRtcRoom.RoomStatus.ROOM_CONNECTED) {
+                    y3KAppRtcRoom.setCallback(MainActivity2.this.roomCallback);
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressDialog.dismiss();
+                        MainActivity2.this.textViewRoomName.setVisibility(View.VISIBLE);
+                        MainActivity2.this.textViewRoomName.setText("Room Name = [" + room.getRoomId() + "]");
+                        MainActivity2.this.editTextRoomName.setVisibility(View.GONE);
+                        MainActivity2.this.buttonConnect.setVisibility(View.GONE);
+                        MainActivity2.this.editTextMessage.setVisibility(View.VISIBLE);
+                        MainActivity2.this.buttonSendMessage.setVisibility(View.VISIBLE);
+                        MainActivity2.this.buttonSendFile.setVisibility(View.VISIBLE);
+                    }
+                });
+            }
+
+            @Override
+            public void onDataChannelAnnouncement(DataChannelAnnouncement dataChannelAnnouncement) {
+
+            }
+
+            @Override
+            public FileChannelReader onCreateFileChannelReader(DataChannel channel, FileChannelDescription channelDescription) {
+                return null;
+            }
+
+            @Override
+            public FileStreamChannelReader onCreateFileStreamChannelReader(DataChannel channel, FileStreamChannelDescription channelDescription) {
+                return null;
+            }
+
+            @Override
+            public ByteArrayChannelReader onCreateByteArrayChannelReader(DataChannel channel) {
+                return null;
+            }
+
+            @Override
+            public void onProxyMessage(String message) {
+
+            }
+        });
     }
 
     @Override

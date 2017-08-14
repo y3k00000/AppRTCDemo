@@ -1,6 +1,8 @@
 package org.appspot.apprtc;
 
-public class Y3kAppRtcRoomParams {
+import java.io.Serializable;
+
+public class Y3kAppRtcRoomParams implements Serializable {
     public boolean isOrdered = true;
     public int maxRetransmitTimeMs = -1;
     public int maxRetransmits = -1;
@@ -14,7 +16,7 @@ public class Y3kAppRtcRoomParams {
     public boolean isIosRemote = false;
     public AppRTCServer appRTCServer = AppRTCServer.APPRTC;
 
-    public enum AppRTCServer {
+    public enum AppRTCServer implements Serializable {
         ASKEY("Askey Cloud Team", "https://webrtc-apcs.askeycloudapi.com", false), APPRTC("Appr.tc", "https://appr.tc", true);
         public final String displayName;
         public final String address;
