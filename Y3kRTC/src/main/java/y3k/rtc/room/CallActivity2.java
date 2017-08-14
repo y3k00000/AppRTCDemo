@@ -1287,7 +1287,7 @@ public class CallActivity2 extends Activity implements AppRTCClient.SignalingEve
                 CallActivity2.this.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        new android.support.v7.app.AlertDialog.Builder(CallActivity2.this)
+                        new AlertDialog.Builder(CallActivity2.this)
                                 .setTitle("File Receiving")
                                 .setMessage("Receive file \"" + ((FileChannelDescription) dataChannelAnnouncement.getChannelDescription()).getFileName() + "\" ?")
                                 .setNegativeButton("NO", new DialogInterface.OnClickListener() {
@@ -1309,7 +1309,7 @@ public class CallActivity2 extends Activity implements AppRTCClient.SignalingEve
                 CallActivity2.this.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        new android.support.v7.app.AlertDialog.Builder(CallActivity2.this)
+                        new AlertDialog.Builder(CallActivity2.this)
                                 .setTitle("File Receiving")
                                 .setMessage("Receive file \"" + ((FileStreamChannelDescription) dataChannelAnnouncement.getChannelDescription()).getFileName() + "\" ?")
                                 .setNegativeButton("NO", new DialogInterface.OnClickListener() {
@@ -1377,7 +1377,7 @@ public class CallActivity2 extends Activity implements AppRTCClient.SignalingEve
                             if (e != null) {
                                 Toast.makeText(CallActivity2.this, "File receive error!!\n" + e.getMessage(), Toast.LENGTH_LONG).show();
                             } else {
-                                new android.support.v7.app.AlertDialog.Builder(CallActivity2.this)
+                                new AlertDialog.Builder(CallActivity2.this)
                                         .setTitle("File Received")
                                         .setMessage("You'd like to open " + result.getName() + " ?")
                                         .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
@@ -1459,7 +1459,7 @@ public class CallActivity2 extends Activity implements AppRTCClient.SignalingEve
                             if (e != null) {
                                 Toast.makeText(CallActivity2.this, "File receive error!!\n" + e.getMessage(), Toast.LENGTH_LONG).show();
                             } else {
-                                new android.support.v7.app.AlertDialog.Builder(CallActivity2.this)
+                                new AlertDialog.Builder(CallActivity2.this)
                                         .setTitle("File Received")
                                         .setMessage("You'd like to open " + file.getName() + " ?")
                                         .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
