@@ -19,7 +19,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
@@ -41,7 +40,6 @@ import org.webrtc.Camera2Enumerator;
 import org.webrtc.CameraEnumerator;
 import org.webrtc.DataChannel;
 import org.webrtc.EglBase;
-import org.webrtc.FileVideoCapturer;
 import org.webrtc.IceCandidate;
 import org.webrtc.Logging;
 import org.webrtc.PeerConnectionFactory;
@@ -54,7 +52,6 @@ import org.webrtc.VideoCapturer;
 import org.webrtc.VideoFileRenderer;
 import org.webrtc.VideoRenderer;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -141,17 +138,17 @@ public class CallActivity2 extends Activity implements AppRTCClient.SignalingEve
                 | LayoutParams.FLAG_TURN_SCREEN_ON);
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-        setContentView(org.appspot.apprtc.R.layout.activity_call);
+        setContentView(R.layout.activity_call);
 
         iceConnected = false;
         signalingParameters = null;
         scalingType = ScalingType.SCALE_ASPECT_FILL;
 
         // Create UI controls.
-        localRender = (SurfaceViewRenderer) findViewById(org.appspot.apprtc.R.id.local_video_view);
-        remoteRenderScreen = (SurfaceViewRenderer) findViewById(org.appspot.apprtc.R.id.remote_video_view);
-        localRenderLayout = (PercentFrameLayout) findViewById(org.appspot.apprtc.R.id.local_video_layout);
-        remoteRenderLayout = (PercentFrameLayout) findViewById(org.appspot.apprtc.R.id.remote_video_layout);
+        localRender = (SurfaceViewRenderer) findViewById(R.id.local_video_view);
+        remoteRenderScreen = (SurfaceViewRenderer) findViewById(R.id.remote_video_view);
+        localRenderLayout = (PercentFrameLayout) findViewById(R.id.local_video_layout);
+        remoteRenderLayout = (PercentFrameLayout) findViewById(R.id.remote_video_layout);
         callFragment = new CallFragment();
         hudFragment = new HudFragment();
 
@@ -195,7 +192,7 @@ public class CallActivity2 extends Activity implements AppRTCClient.SignalingEve
         String roomId = intent.getStringExtra(INTENT_EXTRA_ROOMID);
         Log.d(TAG, "Room ID: " + roomId);
         if (roomId == null || roomId.length() == 0) {
-            logAndToast(getString(org.appspot.apprtc.R.string.missing_url));
+            logAndToast(getString(R.string.missing_url));
             Log.e(TAG, "Incorrect room ID in intent!");
             setResult(RESULT_CANCELED);
             finish();
@@ -260,8 +257,8 @@ public class CallActivity2 extends Activity implements AppRTCClient.SignalingEve
         hudFragment.setArguments(intent.getExtras());
         // Activate call and HUD fragments and start the call.
         FragmentTransaction ft = getFragmentManager().beginTransaction();
-        ft.add(org.appspot.apprtc.R.id.call_fragment_container, callFragment);
-        ft.add(org.appspot.apprtc.R.id.hud_fragment_container, hudFragment);
+        ft.add(R.id.call_fragment_container, callFragment);
+        ft.add(R.id.hud_fragment_container, hudFragment);
         ft.commit();
 
         // For command line execution run connection for <runTimeMs> and exit.
@@ -458,7 +455,7 @@ public class CallActivity2 extends Activity implements AppRTCClient.SignalingEve
         callStartedTimeMs = System.currentTimeMillis();
 
         // Start room connection.
-        logAndToast(getString(org.appspot.apprtc.R.string.connecting_to, roomConnectionParameters.roomUrl));
+        logAndToast(getString(R.string.connecting_to, roomConnectionParameters.roomUrl));
         appRtcClient.connectToRoom(roomConnectionParameters);
 
         // Create and audio manager that will take care of audio routing,
@@ -542,10 +539,10 @@ public class CallActivity2 extends Activity implements AppRTCClient.SignalingEve
             disconnect();
         } else {
             new AlertDialog.Builder(this)
-                    .setTitle(getText(org.appspot.apprtc.R.string.channel_error_title))
+                    .setTitle(getText(R.string.channel_error_title))
                     .setMessage(errorMessage)
                     .setCancelable(false)
-                    .setNeutralButton(org.appspot.apprtc.R.string.ok,
+                    .setNeutralButton(R.string.ok,
                             new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int id) {
@@ -596,7 +593,7 @@ public class CallActivity2 extends Activity implements AppRTCClient.SignalingEve
             });
         } else if (useCamera2()) {
             if (!captureToTexture()) {
-                reportError(getString(org.appspot.apprtc.R.string.camera2_texture_only_error));
+                reportError(getString(R.string.camera2_texture_only_error));
                 return null;
             }
 
