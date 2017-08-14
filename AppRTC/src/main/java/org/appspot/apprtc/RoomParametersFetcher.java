@@ -41,6 +41,7 @@ public class RoomParametersFetcher {
   private final String roomUrl;
   private final String roomMessage;
   private AsyncHttpURLConnection httpConnection;
+  private final Y3kAppRtcRoomParams y3kAppRtcRoomParams;
 
   /**
    * Room parameters fetcher callbacks.
@@ -58,8 +59,9 @@ public class RoomParametersFetcher {
     void onSignalingParametersError(final String description);
   }
 
-  public RoomParametersFetcher(
+  public RoomParametersFetcher(Y3kAppRtcRoomParams y3kAppRtcRoomParams,
       String roomUrl, String roomMessage, final RoomParametersFetcherEvents events) {
+    this.y3kAppRtcRoomParams = y3kAppRtcRoomParams;
     this.roomUrl = roomUrl;
     this.roomMessage = roomMessage;
     this.events = events;
@@ -141,7 +143,7 @@ public class RoomParametersFetcher {
       // Request TURN servers.
       if (!isTurnPresent) {
         LinkedList<PeerConnection.IceServer> turnServers = new LinkedList<>();
-        if(Y3kAppRtcRoomParams.appRTCServer.useCustomStunServers){
+        if(y3kAppRtcRoomParams.appRTCServer.useCustomStunServers){
           turnServers.add(new PeerConnection.IceServer("stun:stun.l.google.com:19302"));
           turnServers.add(new PeerConnection.IceServer("stun:stun1.l.google.com:19302"));
           turnServers.add(new PeerConnection.IceServer("stun:stun2.l.google.com:19302"));

@@ -24,8 +24,6 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.RadioButton;
-import android.widget.SimpleAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,7 +35,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.HashMap;
 
 import y3k.rtc.room.announcement.DataChannelAnnouncement;
 import y3k.rtc.room.channeldescription.FileChannelDescription;
@@ -57,8 +54,8 @@ public class MainActivity2 extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(MainActivity2.this, "Room New Status : "+currentStatus.name(), Toast.LENGTH_SHORT).show();
-                    if(currentStatus == Y3kAppRtcRoom.RoomStatus.DISCONNECTED){
+                    Toast.makeText(MainActivity2.this, "Room New Status : " + currentStatus.name(), Toast.LENGTH_SHORT).show();
+                    if (currentStatus == Y3kAppRtcRoom.RoomStatus.DISCONNECTED) {
                         MainActivity2.this.finish();
                     }
                 }
@@ -301,6 +298,8 @@ public class MainActivity2 extends AppCompatActivity {
     Button buttonConnect, buttonSendMessage, buttonSendFile;
     TextView textViewRoomName;
 
+    Y3kAppRtcRoomParams y3kAppRtcRoomParams = new Y3kAppRtcRoomParams();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -319,28 +318,28 @@ public class MainActivity2 extends AppCompatActivity {
                     Toast.makeText(MainActivity2.this, "RoomName's length must be longer than 8.", Toast.LENGTH_SHORT).show();
                 } else {
                     final CheckBox isOrderedCheckBox = new CheckBox(v.getContext());
-                    isOrderedCheckBox.setChecked(Y3kAppRtcRoomParams.isOrdered);
+                    isOrderedCheckBox.setChecked(y3kAppRtcRoomParams.isOrdered);
                     final EditText maxRetransmitTimeMsEditText = new EditText(v.getContext());
-                    maxRetransmitTimeMsEditText.setText(""+Y3kAppRtcRoomParams.maxRetransmitTimeMs);
-                    maxRetransmitTimeMsEditText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_SIGNED);
+                    maxRetransmitTimeMsEditText.setText("" + y3kAppRtcRoomParams.maxRetransmitTimeMs);
+                    maxRetransmitTimeMsEditText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
                     final EditText maxRetransmitEditText = new EditText(v.getContext());
-                    maxRetransmitEditText.setText(""+Y3kAppRtcRoomParams.maxRetransmits);
-                    maxRetransmitEditText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_SIGNED);
+                    maxRetransmitEditText.setText("" + y3kAppRtcRoomParams.maxRetransmits);
+                    maxRetransmitEditText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
                     final EditText protocolEditText = new EditText(v.getContext());
-                    protocolEditText.setText(Y3kAppRtcRoomParams.protocol);
+                    protocolEditText.setText(y3kAppRtcRoomParams.protocol);
                     final CheckBox isNegotiatedCheckBox = new CheckBox(v.getContext());
-                    isNegotiatedCheckBox.setChecked(Y3kAppRtcRoomParams.isNegotiated);
+                    isNegotiatedCheckBox.setChecked(y3kAppRtcRoomParams.isNegotiated);
                     final EditText channelIdAppRtcDataEditText = new EditText(v.getContext());
-                    channelIdAppRtcDataEditText.setText(""+Y3kAppRtcRoomParams.channelIdAppRtcData);
-                    channelIdAppRtcDataEditText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_SIGNED);
+                    channelIdAppRtcDataEditText.setText("" + y3kAppRtcRoomParams.channelIdAppRtcData);
+                    channelIdAppRtcDataEditText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
                     final EditText channelIdManageEditText = new EditText(v.getContext());
-                    channelIdManageEditText.setText(""+Y3kAppRtcRoomParams.channelIdManage);
-                    channelIdManageEditText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_SIGNED);
+                    channelIdManageEditText.setText("" + y3kAppRtcRoomParams.channelIdManage);
+                    channelIdManageEditText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
                     final EditText channelIdMessageProxyEditText = new EditText(v.getContext());
-                    channelIdMessageProxyEditText.setText(""+Y3kAppRtcRoomParams.channelIdMessageProxy);
-                    channelIdMessageProxyEditText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_SIGNED);
+                    channelIdMessageProxyEditText.setText("" + y3kAppRtcRoomParams.channelIdMessageProxy);
+                    channelIdMessageProxyEditText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
                     final CheckBox isIosRemoteCheckBox = new CheckBox(v.getContext());
-                    isIosRemoteCheckBox.setChecked(Y3kAppRtcRoomParams.isIosRemote);
+                    isIosRemoteCheckBox.setChecked(y3kAppRtcRoomParams.isIosRemote);
                     final Spinner serverSelectSpinner = new Spinner(v.getContext());
                     BaseAdapter serverSelectAdapter = new BaseAdapter() {
                         @Override
@@ -367,7 +366,7 @@ public class MainActivity2 extends AppCompatActivity {
                     };
                     serverSelectSpinner.setAdapter(serverSelectAdapter);
                     serverSelectAdapter.notifyDataSetChanged();
-                    serverSelectSpinner.setSelection(Y3kAppRtcRoomParams.appRTCServer.ordinal());
+                    serverSelectSpinner.setSelection(y3kAppRtcRoomParams.appRTCServer.ordinal());
 
                     View[] viewArray = {
                             isIosRemoteCheckBox,
@@ -382,13 +381,13 @@ public class MainActivity2 extends AppCompatActivity {
                             serverSelectSpinner
                     };
 
-                    for(View view : viewArray){
-                        if(view instanceof EditText){
+                    for (View view : viewArray) {
+                        if (view instanceof EditText) {
                             ((EditText) view).setSingleLine(true);
                         }
                     }
 
-                    String [] viewIntroArray = {
+                    String[] viewIntroArray = {
                             "isIosRemote = ",
                             "isOrdered = ",
                             "maxRetransmitTimeMs = ",
@@ -404,7 +403,7 @@ public class MainActivity2 extends AppCompatActivity {
                     LinearLayout dialogLayout = new LinearLayout(v.getContext());
                     dialogLayout.setOrientation(LinearLayout.VERTICAL);
 
-                    for(int i=0;i<viewIntroArray.length;i++){
+                    for (int i = 0; i < viewIntroArray.length; i++) {
                         LinearLayout columnLayout = new LinearLayout(v.getContext());
                         columnLayout.setOrientation(LinearLayout.HORIZONTAL);
                         TextView viewIntroTextView = new TextView(v.getContext());
@@ -420,23 +419,23 @@ public class MainActivity2 extends AppCompatActivity {
                             .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    Y3kAppRtcRoomParams.isOrdered = isOrderedCheckBox.isChecked();
-                                    Y3kAppRtcRoomParams.maxRetransmitTimeMs = Integer.valueOf(maxRetransmitTimeMsEditText.getText().toString());
-                                    Y3kAppRtcRoomParams.maxRetransmits = Integer.valueOf(maxRetransmitEditText.getText().toString());
-                                    Y3kAppRtcRoomParams.isNegotiated = isNegotiatedCheckBox.isChecked();
-                                    Y3kAppRtcRoomParams.protocol = protocolEditText.getText().toString();
-                                    Y3kAppRtcRoomParams.channelIdAppRtcData = Integer.valueOf(channelIdAppRtcDataEditText.getText().toString());
-                                    Y3kAppRtcRoomParams.channelIdManage = Integer.valueOf(channelIdManageEditText.getText().toString());
-                                    Y3kAppRtcRoomParams.channelIdMessageProxy = Integer.valueOf(channelIdMessageProxyEditText.getText().toString());
-                                    Y3kAppRtcRoomParams.isIosRemote = isIosRemoteCheckBox.isChecked();
-                                    Y3kAppRtcRoomParams.appRTCServer = (Y3kAppRtcRoomParams.AppRTCServer)serverSelectSpinner.getSelectedItem();
+                                    y3kAppRtcRoomParams.isOrdered = isOrderedCheckBox.isChecked();
+                                    y3kAppRtcRoomParams.maxRetransmitTimeMs = Integer.valueOf(maxRetransmitTimeMsEditText.getText().toString());
+                                    y3kAppRtcRoomParams.maxRetransmits = Integer.valueOf(maxRetransmitEditText.getText().toString());
+                                    y3kAppRtcRoomParams.isNegotiated = isNegotiatedCheckBox.isChecked();
+                                    y3kAppRtcRoomParams.protocol = protocolEditText.getText().toString();
+                                    y3kAppRtcRoomParams.channelIdAppRtcData = Integer.valueOf(channelIdAppRtcDataEditText.getText().toString());
+                                    y3kAppRtcRoomParams.channelIdManage = Integer.valueOf(channelIdManageEditText.getText().toString());
+                                    y3kAppRtcRoomParams.channelIdMessageProxy = Integer.valueOf(channelIdMessageProxyEditText.getText().toString());
+                                    y3kAppRtcRoomParams.isIosRemote = isIosRemoteCheckBox.isChecked();
+                                    y3kAppRtcRoomParams.appRTCServer = (Y3kAppRtcRoomParams.AppRTCServer) serverSelectSpinner.getSelectedItem();
                                     final ProgressDialog progressDialog = ProgressDialog.show(MainActivity2.this, "AppRTC", "Connecting to room \"" + roomName + "\"", true, true, new DialogInterface.OnCancelListener() {
                                         @Override
                                         public void onCancel(DialogInterface dialog) {
                                             MainActivity2.this.finish();
                                         }
                                     });
-                                    MainActivity2.this.y3KAppRtcRoom = new Y3kAppRtcRoom(MainActivity2.this, roomName, Y3kAppRtcRoomParams.isIosRemote, new Y3kAppRtcRoom.CallBack() {
+                                    MainActivity2.this.y3KAppRtcRoom = new Y3kAppRtcRoom(MainActivity2.this, roomName, y3kAppRtcRoomParams, new Y3kAppRtcRoom.CallBack() {
                                         @Override
                                         public void onRoomStatusChanged(final Y3kAppRtcRoom room, Y3kAppRtcRoom.RoomStatus currentStatus) {
                                             if (currentStatus == Y3kAppRtcRoom.RoomStatus.ROOM_CONNECTED) {

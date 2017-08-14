@@ -51,6 +51,7 @@ public class WebSocketChannelClient {
   // WebSocket send queue. Messages are added to the queue when WebSocket
   // client is not registered and are consumed in register() call.
   private final LinkedList<String> wsSendQueue;
+  private final Y3kAppRtcRoomParams y3kAppRtcRoomParams;
 
   /**
    * Possible WebSocket connection states.
@@ -68,7 +69,8 @@ public class WebSocketChannelClient {
     void onBinaryMessage(byte[] binary);
   }
 
-  public WebSocketChannelClient(Handler handler, WebSocketChannelEvents events) {
+  public WebSocketChannelClient(Y3kAppRtcRoomParams y3kAppRtcRoomParams, Handler handler, WebSocketChannelEvents events) {
+    this.y3kAppRtcRoomParams = y3kAppRtcRoomParams;
     this.handler = handler;
     this.events = events;
     roomID = null;

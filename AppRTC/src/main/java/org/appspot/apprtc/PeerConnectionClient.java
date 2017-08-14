@@ -82,8 +82,6 @@ public class PeerConnectionClient {
   private static final int HD_VIDEO_WIDTH = 1280;
   private static final int HD_VIDEO_HEIGHT = 720;
   private static final int BPS_IN_KBPS = 1000;
-
-  private static final PeerConnectionClient instance = new PeerConnectionClient();
   private final PCObserver pcObserver = new PCObserver();
   private final SDPObserver sdpObserver = new SDPObserver();
   private final ScheduledExecutorService executor;
@@ -130,6 +128,9 @@ public class PeerConnectionClient {
   private AudioTrack localAudioTrack;
   private DataChannel dataChannel, manageDataChannel, messageDataChannel;
   private boolean dataChannelEnabled;
+  private static PeerConnectionClient instance;
+
+  private final Y3kAppRtcRoomParams y3kAppRtcRoomParams;
 
   /**
    * Peer connection parameters.
@@ -268,10 +269,11 @@ public class PeerConnectionClient {
       void onDataChannel(DataChannel dataChannel);
   }
 
-  public PeerConnectionClient() {
+  public PeerConnectionClient(Y3kAppRtcRoomParams y3kAppRtcRoomParams) {
     // Executor thread is started once in private ctor and is used for all
     // peer connection API calls to ensure new peer connection factory is
     // created on the same thread as previously destroyed factory.
+    this.y3kAppRtcRoomParams = y3kAppRtcRoomParams;
     executor = Executors.newSingleThreadScheduledExecutor();
   }
 
@@ -545,7 +547,7 @@ public class PeerConnectionClient {
       init.negotiated = peerConnectionParameters.dataChannelParameters.negotiated;
       init.maxRetransmits = peerConnectionParameters.dataChannelParameters.maxRetransmits;
       init.maxRetransmitTimeMs = peerConnectionParameters.dataChannelParameters.maxRetransmitTimeMs;
-      init.id = Y3kAppRtcRoomParams.channelIdAppRtcData;
+      init.id = y3kAppRtcRoomParams.channelIdAppRtcData;
       init.protocol = peerConnectionParameters.dataChannelParameters.protocol;
       dataChannel = peerConnection.createDataChannel("ApprtcDemo data", init);
 
@@ -554,7 +556,7 @@ public class PeerConnectionClient {
       init.negotiated = peerConnectionParameters.dataChannelParameters.negotiated;
       init.maxRetransmits = peerConnectionParameters.dataChannelParameters.maxRetransmits;
       init.maxRetransmitTimeMs = peerConnectionParameters.dataChannelParameters.maxRetransmitTimeMs;
-      init.id = Y3kAppRtcRoomParams.channelIdManage;
+      init.id = y3kAppRtcRoomParams.channelIdManage;
       init.protocol = peerConnectionParameters.dataChannelParameters.protocol;
       manageDataChannel = peerConnection.createDataChannel("Manage", init);
 
@@ -563,7 +565,7 @@ public class PeerConnectionClient {
       init.negotiated = peerConnectionParameters.dataChannelParameters.negotiated;
       init.maxRetransmits = peerConnectionParameters.dataChannelParameters.maxRetransmits;
       init.maxRetransmitTimeMs = peerConnectionParameters.dataChannelParameters.maxRetransmitTimeMs;
-      init.id = Y3kAppRtcRoomParams.channelIdMessageProxy;
+      init.id = y3kAppRtcRoomParams.channelIdMessageProxy;
       init.protocol = peerConnectionParameters.dataChannelParameters.protocol;
       messageDataChannel = peerConnection.createDataChannel("MessageProxy", init);
     }

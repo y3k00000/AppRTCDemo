@@ -55,9 +55,12 @@ public class WebSocketRTCClient implements AppRTCClient, WebSocketChannelEvents 
   private String messageUrl;
   private String leaveUrl;
 
-  public WebSocketRTCClient(SignalingEvents events) {
+  private final Y3kAppRtcRoomParams y3kAppRtcRoomParams;
+
+  public WebSocketRTCClient(Y3kAppRtcRoomParams y3kAppRtcRoomParams,SignalingEvents events) {
     this.events = events;
     roomState = ConnectionState.NEW;
+    this.y3kAppRtcRoomParams = y3kAppRtcRoomParams;
     final HandlerThread handlerThread = new HandlerThread(TAG);
     handlerThread.start();
     handler = new Handler(handlerThread.getLooper());
@@ -94,7 +97,7 @@ public class WebSocketRTCClient implements AppRTCClient, WebSocketChannelEvents 
     String connectionUrl = getConnectionUrl(connectionParameters);
     Log.d(TAG, "Connect to room: " + connectionUrl);
     roomState = ConnectionState.NEW;
-    wsClient = new WebSocketChannelClient(handler, this);
+    wsClient = new WebSocketChannelClient(this.y3kAppRtcRoomParams,handler, this);
 
     RoomParametersFetcherEvents callbacks = new RoomParametersFetcherEvents() {
       @Override
@@ -113,7 +116,7 @@ public class WebSocketRTCClient implements AppRTCClient, WebSocketChannelEvents 
       }
     };
 
-    new RoomParametersFetcher(connectionUrl, null, callbacks).makeRequest();
+    new RoomParametersFetcher(this.y3kAppRtcRoomParams,connectionUrl, null, callbacks).makeRequest();
   }
 
   // Disconnect from room and send bye messages - runs on a local looper thread.

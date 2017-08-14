@@ -59,7 +59,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
     private static final int STAT_CALLBACK_PERIOD = 1000;
     private final ArrayList<DataChannelAnnouncement> sentAnnouncements = new ArrayList<>();
     private final ArrayList<DataChannelAnnouncement> receivedAnnouncements = new ArrayList<>();
-    private PeerConnectionClient peerConnectionClient = new PeerConnectionClient();
+    private PeerConnectionClient peerConnectionClient;
     private AppRTCClient appRtcClient;
     private SignalingParameters signalingParameters;
     private PeerConnectionParameters peerConnectionParameters;
@@ -68,7 +68,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
     private CallBack callBack;
     private final Context context;
 
-    private final boolean isIosRemote;
+    private final Y3kAppRtcRoomParams y3kAppRtcRoomParams;
 
     public interface CallBack {
         void onRoomStatusChanged(Y3kAppRtcRoom room, RoomStatus currentStatus);
@@ -84,21 +84,23 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
         void onProxyMessage(String message);
     }
 
-    public Y3kAppRtcRoom(Context context, String roomId, boolean isIosRemote, CallBack callBack) {
+    public Y3kAppRtcRoom(Context context, String roomId, Y3kAppRtcRoomParams y3kAppRtcRoomParams, CallBack callBack) {
         this.callBack = callBack;
         this.roomId = roomId;
         this.context = context;
-        this.isIosRemote = isIosRemote;
+        this.y3kAppRtcRoomParams = y3kAppRtcRoomParams;
 
         boolean loopback = false;
         boolean tracing = false;
 
+        this.peerConnectionClient = new PeerConnectionClient(y3kAppRtcRoomParams);
+
         DataChannelParameters dataChannelParameters = new DataChannelParameters(
-                Y3kAppRtcRoomParams.isOrdered, //EXTRA_ORDERED
-                Y3kAppRtcRoomParams.maxRetransmitTimeMs, //EXTRA_MAX_RETRANSMITS_MS
-                Y3kAppRtcRoomParams.maxRetransmits, //EXTRA_MAX_RETRANSMITS
-                Y3kAppRtcRoomParams.protocol, //EXTRA_PROTOCOL
-                Y3kAppRtcRoomParams.isNegotiated,//EXTRA_NEGOTIATED,
+                y3kAppRtcRoomParams.isOrdered, //EXTRA_ORDERED
+                y3kAppRtcRoomParams.maxRetransmitTimeMs, //EXTRA_MAX_RETRANSMITS_MS
+                y3kAppRtcRoomParams.maxRetransmits, //EXTRA_MAX_RETRANSMITS
+                y3kAppRtcRoomParams.protocol, //EXTRA_PROTOCOL
+                y3kAppRtcRoomParams.isNegotiated,//EXTRA_NEGOTIATED,
                 -1);
 
         peerConnectionParameters =
@@ -127,7 +129,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
         // Create connection client. Use DirectRTCClient if room name is an IP otherwise use the
         // standard WebSocketRTCClient.
 //    if (loopback || !DirectRTCClient.IP_PATTERN.matcher(roomId).matches()) {
-        appRtcClient = new WebSocketRTCClient(new AppRTCClient.SignalingEvents() {
+        appRtcClient = new WebSocketRTCClient(y3kAppRtcRoomParams,new AppRTCClient.SignalingEvents() {
             @Override
             public void onConnectedToRoom(final SignalingParameters params) {
                 Log.d(TAG, "onConnectedToRoom()");
@@ -207,7 +209,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
 //      appRtcClient = new DirectRTCClient(this);
 //    }
         // Create connection parameters.
-        RoomConnectionParameters roomConnectionParameters = new RoomConnectionParameters(Y3kAppRtcRoomParams.appRTCServer.address, roomId, false);
+        RoomConnectionParameters roomConnectionParameters = new RoomConnectionParameters(y3kAppRtcRoomParams.appRTCServer.address, roomId, false);
 
         if (loopback) {
             PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
@@ -375,7 +377,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                     }
                 }
             });
-            if (this.isIosRemote) {
+            if (this.y3kAppRtcRoomParams.isIosRemote) {
                 peerConnectionClient.setManageDataChannel(dataChannel);
             }
         } else if (dataChannel.label().equals("MessageProxy")) {
@@ -400,7 +402,7 @@ public class Y3kAppRtcRoom implements PeerConnectionClient.PeerConnectionEvents 
                     Y3kAppRtcRoom.this.onProxyMessage(receivedString);
                 }
             });
-            if (this.isIosRemote) {
+            if (this.y3kAppRtcRoomParams.isIosRemote) {
                 peerConnectionClient.setMessageDataChannel(dataChannel);
             }
         } else {
